@@ -1,0 +1,3 @@
+# Manually ignore src/glad.c from linguist statistics
+# as it's the GLAD extension loader, not written by me
+src/glad.c linguist-vendored
