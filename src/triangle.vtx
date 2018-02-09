@@ -1,16 +1,9 @@
-// Specify which version of OpenGL Shading Language (GLSL) we want to use
 #version 330 core
 
-// Allocate shader variables which form the "shader plumbing"
-// Input variables
 in vec2 vPosition;
-in vec4 vColor;
+in vec3 vColor;
 
-// Output variables
-out vec4 color;
-
-// Uniform variables (don't change pre vtx/frag - they're across geometric primitives)
-uniform mat4 ModelViewProjectionMatrix;
+out vec3 color;
 
 void main()
 {

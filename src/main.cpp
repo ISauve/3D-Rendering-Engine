@@ -13,14 +13,14 @@ enum VAO_IDs { Triangle, NumVAOs };
 GLuint Buffers[NumBuffers];
 GLuint VAOs[NumVAOs];
 
-const int NUM_VERTICES = 4;
+const int NUM_VERTICES = 3;
 
 // ------------------------------------------------
 //  Forward declarations
 // ------------------------------------------------
 
 GLFWwindow* initWindow();
-void render();
+void render(float time);
 
 // ------------------------------------------------
 //  Main
@@ -44,11 +44,19 @@ int main(int argc, char** argv) {
     cout << "Created OpenGL " << GLVersion.major  << "." <<  GLVersion.minor << " context" <<  endl;
 
     // Enter the rendering loop
+    auto t_start = chrono::high_resolution_clock::now();
     while( !glfwWindowShouldClose(window) ) {
-        render();
+        auto t_now = chrono::high_resolution_clock::now();
+        float time = chrono::duration_cast<chrono::duration<float>>(t_now - t_start).count();
+        render(time);
 
+        // enable blending to create transparency effect
+        glEnable(GL_BLEND);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+        glClearColor(0.0, 0.0, 0.0, 1.0);   // black background
         glClear(GL_COLOR_BUFFER_BIT);
-        glDrawArrays(GL_LINE_LOOP, 0, NUM_VERTICES);
+
+        glDrawArrays(GL_TRIANGLES, 0, NUM_VERTICES);
         /* void glDrawArrays(GLenum mode, GLint first, GLsizei count)
          * Constructs a sequence of geometric primitives using the elements from the currently bound vertex array
          * starting at first and ending at first + count − 1
@@ -80,17 +88,16 @@ GLFWwindow* initWindow() {
     return window;
 }
 
-void render() {
+void render(float time) {
     // Create NumVAOs vertex array objects
     glGenVertexArrays(NumVAOs, VAOs);       // generate: allocate names
     glBindVertexArray(VAOs[Triangle]);      // bind: bring them into existence
 
     // Define the vertices of the shape(s) we're drawing
-    GLfloat vertices[NUM_VERTICES][2] = {
-            { -0.25,  0.25 },
-            {  0.25,  0.25 },
-            {  0.25, -0.25 },
-            { -0.25, -0.25 },
+    GLfloat vertices[NUM_VERTICES][5] = {
+            {  0.0,  0.5, 1.0, 0.0, 0.0 },  // Red
+            { -0.5, -0.5, 0.0, 1.0, 0.0 },  // Green
+            {  0.5, -0.5, 0.0, 0.0, 1.0 }   // Blue
     };
 
     // Send the data to the OpenGL server by storing it in a buffer object
@@ -115,6 +122,21 @@ void render() {
 
     // Connect the shader ‘in’ variables to a vertex-attribute array
     GLint posAttrib = glGetAttribLocation(shaderProgram, "vPosition");
-    glVertexAttribPointer(posAttrib, 2, GL_FLOAT, GL_FALSE, 0, 0);
+    glVertexAttribPointer(posAttrib, 2, GL_FLOAT, GL_FALSE, 5*sizeof(float), 0);
     glEnableVertexAttribArray(posAttrib);
+
+    // Connect the output of the vtx shader to the input of the frag shader
+    GLint colAttrib = glGetAttribLocation(shaderProgram, "vColor");
+    glVertexAttribPointer(colAttrib, 3, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void*)(2*sizeof(float)));
+    /* Last 2 parameters are:
+     *  1) byte offset between consecutive elements in the array
+     *  2) offset from the start of the buffer object for the first set of values in the array
+     *      -> have to skip over 2 floats to read the color data
+     */
+    glEnableVertexAttribArray(colAttrib);
+
+    // Vary the transparency with time
+    GLint uniColor = glGetUniformLocation(shaderProgram, "transparency");
+    time = (sin(time * 2.0f) + 1.0f) / 2.0;
+    glUniform1f(uniColor, time);
 }
