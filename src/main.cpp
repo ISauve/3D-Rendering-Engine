@@ -7,20 +7,20 @@ using namespace std;
 //  Global variable declarations
 // ------------------------------------------------
 
-enum Buffer_IDs { ArrayBuffer, NumBuffers };
+enum Buffer_IDs { ArrayBuffer, ElementsBuffer, NumBuffers };
 enum VAO_IDs { Triangle, NumVAOs };
 
 GLuint Buffers[NumBuffers];
 GLuint VAOs[NumVAOs];
 
-const int NUM_VERTICES = 3;
+const int NUM_INDICES = 6;
 
 // ------------------------------------------------
 //  Forward declarations
 // ------------------------------------------------
 
 GLFWwindow* initWindow();
-void render(float time);
+void render();
 
 // ------------------------------------------------
 //  Main
@@ -44,19 +44,18 @@ int main(int argc, char** argv) {
     cout << "Created OpenGL " << GLVersion.major  << "." <<  GLVersion.minor << " context" <<  endl;
 
     // Enter the rendering loop
-    auto t_start = chrono::high_resolution_clock::now();
     while( !glfwWindowShouldClose(window) ) {
-        auto t_now = chrono::high_resolution_clock::now();
-        float time = chrono::duration_cast<chrono::duration<float>>(t_now - t_start).count();
-        render(time);
+        render();
 
-        // enable blending to create transparency effect
+        // Enable blending to create transparency effect
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-        glClearColor(0.0, 0.0, 0.0, 1.0);   // black background
+
+        // Clear a black background
+        glClearColor(0.0, 0.0, 0.0, 1.0);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glDrawArrays(GL_TRIANGLES, 0, NUM_VERTICES);
+        glDrawElements(GL_TRIANGLES, NUM_INDICES, GL_UNSIGNED_INT, nullptr);
         /* void glDrawArrays(GLenum mode, GLint first, GLsizei count)
          * Constructs a sequence of geometric primitives using the elements from the currently bound vertex array
          * starting at first and ending at first + count − 1
@@ -88,22 +87,30 @@ GLFWwindow* initWindow() {
     return window;
 }
 
-void render(float time) {
+void render() {
     // Create NumVAOs vertex array objects
     glGenVertexArrays(NumVAOs, VAOs);       // generate: allocate names
     glBindVertexArray(VAOs[Triangle]);      // bind: bring them into existence
 
     // Define the vertices of the shape(s) we're drawing
-    GLfloat vertices[NUM_VERTICES][5] = {
-            {  0.0,  0.5, 1.0, 0.0, 0.0 },  // Red
-            { -0.5, -0.5, 0.0, 1.0, 0.0 },  // Green
-            {  0.5, -0.5, 0.0, 0.0, 1.0 }   // Blue
+    GLfloat vertices[][5] = {
+            { -0.5f,  0.5f, 1.0f, 0.0f, 0.0f },  // Top-left
+            {  0.5f,  0.5f, 0.0f, 1.0f, 0.0f },  // Top-right
+            {  0.5f, -0.5f, 0.0f, 0.0f, 1.0f },  // Bottom-right
+            { -0.5f, -0.5f, 1.0f, 1.0f, 1.0f }   // Bottom-left
+    };
+
+    // Load the indices of the points we want to draw
+    GLuint elements[] = {
+            0, 1, 2,        // Triangle 1
+            2, 3, 0         // Triangle 2
     };
 
     // Send the data to the OpenGL server by storing it in a buffer object
-    glGenBuffers(NumBuffers, Buffers);                                          // create the buffer object
+    glGenBuffers(NumBuffers, Buffers);
+
     glBindBuffer(GL_ARRAY_BUFFER, Buffers[ArrayBuffer]);
-    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);  // fill the buffer object
+    glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
     /* void glBufferData(GLenum target, GLsizeiptr size, const GLvoid *data, GLenum usage)
      * Usage is how the data will be read and written after allocation
      *   - GL_STATIC_DRAW: The vertex data will be uploaded once and drawn many times (e.g. the world).
@@ -111,6 +118,9 @@ void render(float time) {
      *   - GL_STREAM_DRAW: The vertex data will be uploaded once and drawn once.
      *   - there are more, but those are 3 common ones
      */
+
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Buffers[ElementsBuffer]);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(elements), elements, GL_STATIC_DRAW);
 
     // Initialize our shaders & generate a shader program
     std::vector<ShaderInfo> shaders = {
@@ -134,9 +144,4 @@ void render(float time) {
      *      -> have to skip over 2 floats to read the color data
      */
     glEnableVertexAttribArray(colAttrib);
-
-    // Vary the transparency with time
-    GLint uniColor = glGetUniformLocation(shaderProgram, "transparency");
-    time = (sin(time * 2.0f) + 1.0f) / 2.0;
-    glUniform1f(uniColor, time);
 }
