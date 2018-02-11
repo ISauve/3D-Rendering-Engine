@@ -4,23 +4,12 @@
 using namespace std;
 
 // ------------------------------------------------
-//  Global variable declarations
-// ------------------------------------------------
-
-enum Buffer_IDs { ArrayBuffer, ElementsBuffer, NumBuffers };
-enum VAO_IDs { Triangle, NumVAOs };
-
-GLuint Buffers[NumBuffers];
-GLuint VAOs[NumVAOs];
-
-const int NUM_INDICES = 6;
-
-// ------------------------------------------------
 //  Forward declarations
 // ------------------------------------------------
 
 GLFWwindow* initWindow();
-void render();
+void renderFlashingTriangle(float time);
+void renderRectangle();
 
 // ------------------------------------------------
 //  Main
@@ -44,24 +33,25 @@ int main(int argc, char** argv) {
     cout << "Created OpenGL " << GLVersion.major  << "." <<  GLVersion.minor << " context" <<  endl;
 
     // Enter the rendering loop
+    auto t_start = chrono::high_resolution_clock::now();
     while( !glfwWindowShouldClose(window) ) {
-        render();
-
         // Enable blending to create transparency effect
         glEnable(GL_BLEND);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-        // Clear a black background
+        // Draw a black background
         glClearColor(0.0, 0.0, 0.0, 1.0);
         glClear(GL_COLOR_BUFFER_BIT);
 
-        glDrawElements(GL_TRIANGLES, NUM_INDICES, GL_UNSIGNED_INT, nullptr);
-        /* void glDrawArrays(GLenum mode, GLint first, GLsizei count)
-         * Constructs a sequence of geometric primitives using the elements from the currently bound vertex array
-         * starting at first and ending at first + count − 1
-         * Mode specifies what kinds of primitives are constructed and is one of GL_POINTS, GL_LINES,
-         * GL_LINE_STRIP, GL_LINE_LOOP, GL_TRIANGLES, GL_TRIANGLE_STRIP, GL_TRIANGLE_FAN, and GL_PATCHES
-         */
+        auto t_now = chrono::high_resolution_clock::now();
+        float time = chrono::duration_cast<chrono::duration<float>>(t_now - t_start).count();
+        renderFlashingTriangle(time);
+        glDrawArrays(GL_TRIANGLES, 0, 3);   // Draws the currently bound VAO
+
+        renderRectangle();
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);  // Draws the currently bound VAO using indices
+
+        // Flush the buffers
         glFlush();
 
         glfwSwapBuffers(window);
@@ -87,61 +77,126 @@ GLFWwindow* initWindow() {
     return window;
 }
 
-void render() {
-    // Create NumVAOs vertex array objects
-    glGenVertexArrays(NumVAOs, VAOs);       // generate: allocate names
-    glBindVertexArray(VAOs[Triangle]);      // bind: bring them into existence
+void renderFlashingTriangle(float time) {
+    // Create & bind a vertex array object
+    GLuint vao;
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
 
-    // Define the vertices of the shape(s) we're drawing
+    // Define the vertices of the triangle
     GLfloat vertices[][5] = {
-            { -0.5f,  0.5f, 1.0f, 0.0f, 0.0f },  // Top-left
-            {  0.5f,  0.5f, 0.0f, 1.0f, 0.0f },  // Top-right
-            {  0.5f, -0.5f, 0.0f, 0.0f, 1.0f },  // Bottom-right
-            { -0.5f, -0.5f, 1.0f, 1.0f, 1.0f }   // Bottom-left
-    };
-
-    // Load the indices of the points we want to draw
-    GLuint elements[] = {
-            0, 1, 2,        // Triangle 1
-            2, 3, 0         // Triangle 2
+            { -0.8f, 0.9f, 1.0f, 0.0f, 0.0f },  // Red
+            { -0.9f, 0.7f, 0.0f, 1.0f, 0.0f },  // Green
+            { -0.7f, 0.7f, 0.0f, 0.0f, 1.0f }   // Blue
     };
 
     // Send the data to the OpenGL server by storing it in a buffer object
-    glGenBuffers(NumBuffers, Buffers);
-
-    glBindBuffer(GL_ARRAY_BUFFER, Buffers[ArrayBuffer]);
+    GLuint vbo;
+    glGenVertexArrays(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-    /* void glBufferData(GLenum target, GLsizeiptr size, const GLvoid *data, GLenum usage)
-     * Usage is how the data will be read and written after allocation
-     *   - GL_STATIC_DRAW: The vertex data will be uploaded once and drawn many times (e.g. the world).
-     *   - GL_DYNAMIC_DRAW: The vertex data will be created once, changed from time to time, but drawn many times more than that.
-     *   - GL_STREAM_DRAW: The vertex data will be uploaded once and drawn once.
-     *   - there are more, but those are 3 common ones
-     */
-
-    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, Buffers[ElementsBuffer]);
-    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(elements), elements, GL_STATIC_DRAW);
 
     // Initialize our shaders & generate a shader program
     std::vector<ShaderInfo> shaders = {
-            { GL_VERTEX_SHADER,     "src/triangle.vtx" },
+            { GL_VERTEX_SHADER,     "src/passThrough.vtx" },
             { GL_FRAGMENT_SHADER,   "src/triangle.frag" }
     };
     GLuint shaderProgram = LoadShaders(shaders);
     glUseProgram(shaderProgram);
 
-    // Connect the shader ‘in’ variables to a vertex-attribute array
+    // Connect the shader ‘in’ variables to the data in the buffer
     GLint posAttrib = glGetAttribLocation(shaderProgram, "vPosition");
-    glVertexAttribPointer(posAttrib, 2, GL_FLOAT, GL_FALSE, 5*sizeof(float), 0);
+    glVertexAttribPointer(posAttrib, 2, GL_FLOAT, GL_FALSE,
+                          5*sizeof(float),   // Offset btwn consecutive vertices
+                          0);                // Offset fr/ beginning of vertex
     glEnableVertexAttribArray(posAttrib);
 
-    // Connect the output of the vtx shader to the input of the frag shader
     GLint colAttrib = glGetAttribLocation(shaderProgram, "vColor");
-    glVertexAttribPointer(colAttrib, 3, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void*)(2*sizeof(float)));
-    /* Last 2 parameters are:
-     *  1) byte offset between consecutive elements in the array
-     *  2) offset from the start of the buffer object for the first set of values in the array
-     *      -> have to skip over 2 floats to read the color data
-     */
+    glVertexAttribPointer(colAttrib, 3, GL_FLOAT, GL_FALSE,
+                          5*sizeof(float),
+                          (void*)(2*sizeof(float)));  // Need to skip over 2 attributes to read color data
+    glEnableVertexAttribArray(colAttrib);
+
+    // Vary the transparency with time
+    GLint uniColor = glGetUniformLocation(shaderProgram, "transparency");
+    time = (sin(time * 2.0f) + 1.0f) / 2.0;
+    glUniform1f(uniColor, time);
+}
+
+void renderRectangle() {
+    // Create & bind a vertex array object
+    GLuint vao;
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+
+    // Initialize data for the vertices we're drawing
+    GLfloat positions[] = {
+             -0.6f, 0.9f,  // Top-left
+             -0.4f, 0.9f,  // Top-right
+             -0.4f, 0.7f,  // Bottom-right
+             -0.6f, 0.7f,  // Bottom-left
+    };
+    GLfloat colors[] = {
+            1.0f, 0.0f, 1.0f,  // Pink
+            0.0f, 1.0f, 1.0f,  // Light blue
+            1.0f, 1.0f, 0.0f,  // Yellow
+            1.0f, 1.0f, 1.0f,  // White
+    };
+
+    // Initialize a vertex buffer object
+    GLuint vbo;
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+    // We'll use glBufferSubData to load the data in 2 parts
+    glBufferData(GL_ARRAY_BUFFER,                     // target
+                 sizeof(positions) + sizeof(colors),  // total size
+                 NULL,                                // no data (yet)
+                 GL_STATIC_DRAW);                     // method
+
+    glBufferSubData(GL_ARRAY_BUFFER,     // target
+                    0,                   // no offset
+                    sizeof(positions),   // size
+                    positions);          // data
+
+    glBufferSubData(GL_ARRAY_BUFFER,     // target
+                    sizeof(positions),   // offset = sizeof previous data entered
+                    sizeof(colors),      // size
+                    colors);             // data
+
+    // Specify indices to select which vertices to draw
+    GLuint indices[] = {
+            0, 1, 2,        // Triangle 1
+            2, 3, 0,        // Triangle 2
+    };
+
+    // Initialize an element array buffer object to store these indices
+    GLuint ebo;
+    glGenBuffers(1, &ebo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+
+    // Store the data in this buffer
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    // Initialize our shaders & generate a shader program
+    std::vector<ShaderInfo> shaders = {
+            { GL_VERTEX_SHADER,     "src/passThrough.vtx" },
+            { GL_FRAGMENT_SHADER,   "src/rectangle.frag" }
+    };
+    GLuint shaderProgram = LoadShaders(shaders);
+    glUseProgram(shaderProgram);
+
+    // Connect the shader ‘in’ variables to the data in the GL_ARRAY_BUFFER
+    GLint posAttrib = glGetAttribLocation(shaderProgram, "vPosition");
+    glVertexAttribPointer(posAttrib,   // shader attribute location
+                          2,           // size (number of components per vertex)
+                          GL_FLOAT,    // data type
+                          GL_FALSE,    // if data should be normalized
+                          0,           // offset between consecutive vertices (0 = "tightly packed")
+                          0);          // offset from the start of the buffer object
+    glEnableVertexAttribArray(posAttrib);
+
+    GLint colAttrib = glGetAttribLocation(shaderProgram, "vColor");
+    glVertexAttribPointer(colAttrib, 3, GL_FLOAT, GL_FALSE, 0, (void*)(sizeof(positions)));
     glEnableVertexAttribArray(colAttrib);
 }
