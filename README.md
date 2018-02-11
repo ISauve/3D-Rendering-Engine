@@ -1,4 +1,6 @@
-OpenGL Practice
+# OpenGL Practice
+
+![Preview](preview.gif?raw=true)
 
 #### Libraries
 * OpenGL 4.1  
