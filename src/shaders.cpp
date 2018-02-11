@@ -1,5 +1,6 @@
 #include <iostream>
 #include <fstream>
+#include <OpenGL/gl.h>
 #include "shaders.h"
 
 using namespace std;
