@@ -18,6 +18,7 @@ GLFWwindow* initWindow();
 void renderFlashingTriangle(GLuint, float);
 void renderRectangle(GLuint);
 void renderRotatingRectangle(GLuint, float);
+void render3DRotatingRectangle(GLuint, float);
 
 // ------------------------------------------------
 //  Main
@@ -79,6 +80,10 @@ int main(int argc, char** argv) {
 
         renderRotatingRectangle(shaderProgram3, time);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+
+        render3DRotatingRectangle(shaderProgram3, time);
+        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+
         // Flush the buffers
         glFlush();
 
@@ -222,10 +227,10 @@ void renderRotatingRectangle(GLuint shaderProgram, float time) {
     glBindVertexArray(vao);
 
     GLfloat positions[] = {
-            -0.3f, 0.9f,  // Top-left
-            -0.1f, 0.9f,  // Top-right
-            -0.1f, 0.7f,  // Bottom-right
-            -0.3f, 0.7f,  // Bottom-left
+            -0.2f, 0.9f,  // Top-left
+             0.0f, 0.9f,  // Top-right
+             0.0f, 0.7f,  // Bottom-right
+            -0.2f, 0.7f,  // Bottom-left
     };
     GLfloat colors[] = {
             0.0f, 1.0f, 0.7f,  // Cyan
@@ -266,7 +271,7 @@ void renderRotatingRectangle(GLuint shaderProgram, float time) {
     // Rotate the matrix as a factor of time by creating a transformation matrix
     // 1) Translate the point to the origin
     mat4 trans1 = translate(mat4(1.0f),                // target: a 4x4 identity matrix
-                            vec3(0.2f, -0.8f, 0.0f));  // transformation details
+                            vec3(0.1f, -0.8f, 0.0f));  // transformation details
 
     // 2) Rotate the point around the z axis
     vec3 rotationAxis(0.0f, 0.0f, 1.0f);                // plane of rotation = z
@@ -274,7 +279,7 @@ void renderRotatingRectangle(GLuint shaderProgram, float time) {
     mat4 rot = rotate(mat4(1.0f), rotationInRad, rotationAxis);
 
     // 3) Translate the point back to it's original position
-    mat4 trans2 = translate(mat4(1.0f), vec3(-0.2f, 0.8f, 0.0f));
+    mat4 trans2 = translate(mat4(1.0f), vec3(-0.1f, 0.8f, 0.0f));
 
     mat4 transformation = trans2 * rot * trans1;    // Transformations happen from right -> left
 
@@ -286,3 +291,75 @@ void renderRotatingRectangle(GLuint shaderProgram, float time) {
                        value_ptr(transformation));   // specify the matrix to upload
 }
 
+void render3DRotatingRectangle(GLuint shaderProgram, float time) {
+    GLuint vao;
+    glGenVertexArrays(1, &vao);
+    glBindVertexArray(vao);
+
+    GLfloat positions[] = {
+            0.1f, 0.9f,  // Top-left
+            0.3f, 0.9f,  // Top-right
+            0.3f, 0.7f,  // Bottom-right
+            0.1f, 0.7f,  // Bottom-left
+    };
+    GLfloat colors[] = {
+            1.0f, 0.7f, 0.0f,  // Orange
+            1.0f, 0.0f, 0.0f,  // Red
+            1.0f, 0.3f, 1.0f,  // Pink
+            0.8f, 1.0f, 0.0f,  // Yellow
+    };
+
+    GLuint vbo;
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+    glBufferData(GL_ARRAY_BUFFER, sizeof(positions) + sizeof(colors), NULL, GL_STATIC_DRAW);
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(positions), positions);
+    glBufferSubData(GL_ARRAY_BUFFER, sizeof(positions), sizeof(colors), colors);
+
+    GLuint indices[] = {
+            0, 1, 2,        // Triangle 1
+            2, 3, 0,        // Triangle 2
+    };
+
+    GLuint ebo;
+    glGenBuffers(1, &ebo);
+    glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
+    glBufferData(GL_ELEMENT_ARRAY_BUFFER, sizeof(indices), indices, GL_STATIC_DRAW);
+
+    glUseProgram(shaderProgram);
+    GLint posAttrib = glGetAttribLocation(shaderProgram, "vPosition");
+    glVertexAttribPointer(posAttrib, 2, GL_FLOAT, GL_FALSE, 0, 0);
+    glEnableVertexAttribArray(posAttrib);
+
+    GLint colAttrib = glGetAttribLocation(shaderProgram, "vColor");
+    glVertexAttribPointer(colAttrib, 3, GL_FLOAT, GL_FALSE, 0, (void*)(sizeof(positions)));
+    glEnableVertexAttribArray(colAttrib);
+
+    using namespace glm;
+
+    // Create a model transformation matrix (rotate vertices)
+    mat4 trans1 = translate(mat4(1.0f), vec3(-0.2f, -0.8f, 0.0f));
+    mat4 rot = rotate(mat4(1.0f), time * 0.3f * radians(360.f), vec3(0.0f, 0.0f, 1.0f));
+    mat4 trans2 = translate(mat4(1.0f), vec3(0.2f, 0.8f, 0.0f));
+    mat4 model = trans2 * rot * trans1;
+
+    // Create a view transformation matrix
+    mat4 view = lookAt(    // simulates a moving camera
+            vec3(1.0f, 0.0f, 0.45f),  // eye (camera position)
+            vec3(-0.2, 0.8f, -0.7f),  // center (where camera is pointed)
+            vec3(0.0f, 0.0f, 1.0f)    // up (which axis of your model is oriented
+                                      //   towards the top of the screen)
+    );
+
+    // Create a projection matrix
+    mat4 proj = perspective(radians(45.0f),   // vertical FOV
+                            600.0f / 600.0f,  // aspect ratio
+                            1.0f,             // "near" clipping plane
+                            10.0f);          // "far" clipping plane
+
+    // Pass the matrix into the shader
+    mat4 transformation = proj * view * model;
+    GLint uniTransform = glGetUniformLocation(shaderProgram, "transformation");
+    glUniformMatrix4fv(uniTransform, 1, GL_FALSE, value_ptr(transformation));
+}
