@@ -253,7 +253,7 @@ void render3DRotatingRectangle(GLuint shaderProgram, float time) {
     glUniformMatrix4fv(uniTransform, 1, GL_FALSE, value_ptr(transformation));
 }
 
-void renderRotatingPyramid(GLuint shaderProgram, float time) {
+void renderRotatingPyramid(GLuint shaderProgram, float time, Camera& c) {
     GLuint vao;
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
@@ -263,24 +263,24 @@ void renderRotatingPyramid(GLuint shaderProgram, float time) {
 
     GLfloat positions[] = {
             // Front face
-            -0.65f, 0.3f + h, -h / 2.0f,  // Top
-            -0.8f,  0.3f,     0.0f,       // Bottom-left
-            -0.5f,  0.3f,     0.0f,       // Bottom-right
+             0.0f,   h/2.0f,  -h / 2.0f,  // Top
+            -0.15f, -h/2.0f,  0.0f,       // Bottom-left
+             0.15f, -h/2.0f,  0.0f,       // Bottom-right
 
             // Back left face
-            -0.65f, 0.3f + h, -h / 2.0f,
-            -0.8f,  0.3f,     0.0f,
-            -0.65f, 0.3f,     -h,
+             0.0f,   h/2.0f,  -h / 2.0f,
+            -0.15f, -h/2.0f,  0.0f,
+             0.0f,  -h/2.0f,  -h,         // Back
 
             // Back right face
-            -0.65f, 0.3f + h, -h / 2.0f,
-            -0.5f,  0.3f,     0.0f,
-            -0.65f, 0.3f,     -h,
+             0.0f,   h/2.0f,  -h / 2.0f,
+             0.15f, -h/2.0f,  0.0f,
+             0.0f,  -h/2.0f,  -h,
 
             // Bottom
-            -0.8f,  0.3f,     0.0f,
-            -0.5f,  0.3f,     0.0f,
-            -0.65f, 0.3f,     -h          // Back
+            -0.15f, -h/2.0f,  0.0f,
+             0.15f, -h/2.0f,  0.0f,
+             0.0f,  -h/2.0f,  -h
     };
     GLfloat colors[] = {
             // Green face
@@ -337,6 +337,7 @@ void renderRotatingPyramid(GLuint shaderProgram, float time) {
     // Create a model matrix (nothing needed here)
     mat4 model = mat4(1.0f);
 
+    /*
     // Create a view matrix
     // Keep Y constant so we're always looking from underneath
     float y = -0.3f;
@@ -348,12 +349,13 @@ void renderRotatingPyramid(GLuint shaderProgram, float time) {
                         vec3(-0.65, 0.3f + h / 2.0f, -h / 2.0f),  // Look at the center of the pyramid
                         vec3(0.0f, 1.0f, 0.0f)                    // Y is up
     );
+     */
 
     // Create a projection matrix
-    mat4 proj = perspective(radians(45.0f), 600.0f / 600.0f, 0.1f, 10.0f);
+    mat4 proj = perspective(radians(45.0f), 600.0f / 600.0f, 0.3f, 10.0f);
 
     // Pass the matrix into the shader
-    mat4 transformation = proj * view * model;
+    mat4 transformation = proj * c.ViewMatrix() * model;
     GLint uniTransform = glGetUniformLocation(shaderProgram, "transformation");
     glUniformMatrix4fv(uniTransform, 1, GL_FALSE, value_ptr(transformation));
 }

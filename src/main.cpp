@@ -13,6 +13,7 @@ GLFWwindow* initWindow() {
     return window;
 }
 
+// Load the requested shader program
 GLuint fetchShader(string vtx, string frag) {
     vtx = "src/" + vtx;
     frag = "src/" + frag;
@@ -21,6 +22,19 @@ GLuint fetchShader(string vtx, string frag) {
             { GL_FRAGMENT_SHADER, frag.c_str() }
     };
     return LoadShaders(shaders);
+}
+
+// Check which keys were pushed & update camera accordingly
+void handleInput (Camera& c, GLFWwindow* window) {
+    if (glfwGetKey(window, GLFW_KEY_LEFT)) c.Look(LEFT);
+    if (glfwGetKey(window, GLFW_KEY_RIGHT)) c.Look(RIGHT);
+    if (glfwGetKey(window, GLFW_KEY_UP)) c.Look(UP);
+    if (glfwGetKey(window, GLFW_KEY_DOWN)) c.Look(DOWN);
+
+    if (glfwGetKey(window, GLFW_KEY_A)) c.Move(LEFT);
+    if (glfwGetKey(window, GLFW_KEY_D)) c.Move(RIGHT);
+    if (glfwGetKey(window, GLFW_KEY_W)) c.Move(FORWARD);
+    if (glfwGetKey(window, GLFW_KEY_S)) c.Move(BACKWARD);
 }
 
 int main(int argc, char** argv) {
@@ -41,13 +55,15 @@ int main(int argc, char** argv) {
     cout << "Created OpenGL " << GLVersion.major  << "." <<  GLVersion.minor << " context" <<  endl;
 
     // Load our shader programs
-    GLuint shaderProgram1 = fetchShader("passThrough.vtx",    "triangle.frag");
-    GLuint shaderProgram2 = fetchShader("passThrough.vtx",    "passThrough.frag");
-    GLuint shaderProgram3 = fetchShader("transformation.vtx", "passThrough.frag");
-    GLuint shaderProgram4 = fetchShader("transformation3d.vtx",  "passThrough.frag");
+    GLuint shaderProgram1 = fetchShader("passThrough.vtx",      "triangle.frag");
+    GLuint shaderProgram2 = fetchShader("passThrough.vtx",      "passThrough.frag");
+    GLuint shaderProgram3 = fetchShader("transformation.vtx",   "passThrough.frag");
+    GLuint shaderProgram4 = fetchShader("transformation3d.vtx", "passThrough.frag");
 
     // Define desired frame rate
     int FPS = 60;
+
+    Camera c;
 
     // Enter the rendering loop
     auto start = chrono::high_resolution_clock::now();
@@ -83,7 +99,7 @@ int main(int argc, char** argv) {
         render3DRotatingRectangle(shaderProgram3, diff);
         glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 
-        renderRotatingPyramid(shaderProgram4, diff);
+        renderRotatingPyramid(shaderProgram4, diff, c);
         glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, nullptr);
 
         // Flush the buffers
@@ -91,6 +107,7 @@ int main(int argc, char** argv) {
 
         glfwSwapBuffers(window);
         glfwPollEvents();
+        handleInput(c, window);
 
         // Pause for an appropriate amount of time to acheive desired frame rate
         auto msPerFrame = int (1.0 / (FPS / 1000.0));
@@ -100,3 +117,4 @@ int main(int argc, char** argv) {
     glfwTerminate();
     return  0;
 }
+
