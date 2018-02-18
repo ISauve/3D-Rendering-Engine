@@ -1,9 +1,10 @@
 #include "Camera.h"
+#include <glm/gtc/matrix_transform.hpp>
 
 using namespace glm;
 
 Camera::Camera() {
-    _position = vec3(0.0f, 0.0f, 1.0f);
+    _position = vec3(0.0f, 0.0f, 3.0f);
     _facing = vec3(0.0f, 0.0f, -1.0f);
     _up = vec3(0.0f, 1.0f, 0.0f);
     _yaw = -90.0f;

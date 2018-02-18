@@ -1,5 +1,10 @@
-#include "render.h"
-#include "shaders.h"
+#include "Object.h"
+#include "Camera.h"
+#include "Shaders.h"
+
+#include <iostream>
+#include <thread>
+
 using namespace std;
 
 GLFWwindow* initWindow() {
@@ -15,8 +20,8 @@ GLFWwindow* initWindow() {
 
 // Load the requested shader program
 GLuint fetchShader(string vtx, string frag) {
-    vtx = "src/" + vtx;
-    frag = "src/" + frag;
+    vtx = "src/shaders/" + vtx;
+    frag = "src/shaders/" + frag;
     vector<ShaderInfo> shaders = {
             { GL_VERTEX_SHADER,   vtx.c_str() },
             { GL_FRAGMENT_SHADER, frag.c_str() }
@@ -55,10 +60,9 @@ int main(int argc, char** argv) {
     cout << "Created OpenGL " << GLVersion.major  << "." <<  GLVersion.minor << " context" <<  endl;
 
     // Load our shader programs
-    GLuint shaderProgram1 = fetchShader("passThrough.vtx",      "triangle.frag");
-    GLuint shaderProgram2 = fetchShader("passThrough.vtx",      "passThrough.frag");
-    GLuint shaderProgram3 = fetchShader("transformation.vtx",   "passThrough.frag");
-    GLuint shaderProgram4 = fetchShader("transformation3d.vtx", "passThrough.frag");
+    GLuint shaderProgram1 = fetchShader("passThrough.vtx",   "triangle.frag");
+    GLuint shaderProgram2 = fetchShader("passThrough.vtx",   "passThrough.frag");
+    GLuint shaderProgram3 = fetchShader("passThrough3D.vtx", "passThrough.frag");
 
     // Define desired frame rate
     int FPS = 60;
@@ -75,7 +79,6 @@ int main(int argc, char** argv) {
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         // Enable depth test
-        // Enable depth test
         glEnable(GL_DEPTH_TEST);
         glDepthFunc(GL_LESS);   // accept fragment if closer to camera
 
@@ -87,20 +90,20 @@ int main(int argc, char** argv) {
         float diff = chrono::duration_cast<chrono::duration<float>>(now - start).count();
 
         // Render our objects
-        renderFlashingTriangle(shaderProgram1, diff);
-        glDrawArrays(GL_TRIANGLES, 0, 3);   // Draws the currently bound VAO
+        Triangle t(shaderProgram1, c);
+        t.render(diff);
 
-        renderRectangle(shaderProgram2);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);  // Draws the currently bound VAO using indices
+        Square s(shaderProgram2, c);
+        s.render(0);
 
-        renderRotatingRectangle(shaderProgram3, diff);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+        RotatingSquare r(shaderProgram2, c);
+        r.render(diff);
 
-        render3DRotatingRectangle(shaderProgram3, diff);
-        glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
+        RotatingSquare3D r3d(shaderProgram2, c);
+        r3d.render(diff);
 
-        renderRotatingPyramid(shaderProgram4, diff, c);
-        glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, nullptr);
+        RotatingPyramid p(shaderProgram3, c);
+        p.render(diff);
 
         // Flush the buffers
         glFlush();

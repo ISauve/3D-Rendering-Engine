@@ -1,7 +1,7 @@
 #include <iostream>
 #include <fstream>
 #include <OpenGL/gl.h>
-#include "shaders.h"
+#include "Shaders.h"
 
 using namespace std;
 
