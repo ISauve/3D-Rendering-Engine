@@ -9,6 +9,7 @@ Scene::Scene(Camera* c) {
 
     // Load objects in the scene
     _objects.push_back(new RotatingShape(fetchShader("passThrough3D.vtx", "passThrough.frag"), c, RotatingShape::Type::PYRAMID));
+    _objects.push_back(new RotatingShape(fetchShader("texture.vtx", "texture.frag"), c, RotatingShape::Type::STONE_PYRAMID));
     _objects.push_back(new RotatingShape(fetchShader("passThrough.vtx", "triangle.frag"), c, RotatingShape::Type::TRIANGLE_2D));
     _objects.push_back(new RotatingShape(fetchShader("passThrough.vtx", "passThrough.frag"), c, RotatingShape::Type::SQUARE_3D));
 }

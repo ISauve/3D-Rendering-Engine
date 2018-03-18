@@ -53,17 +53,20 @@ public:
 class RotatingShape : public Object {
     std::chrono::time_point<std::chrono::high_resolution_clock> _start;
     GLuint _ebo;
+    GLuint _tex;
 
-    void initializePyramid();
     void initialize2DTriangle();
     void initialize3DSquare();
+    void initializePyramid();
+    void initializeStonePyramid();
 
-    void renderPyramid();
     void render2DTriangle();
     void render3DSquare();
+    void renderPyramid();
+    void renderStonePyramid();
 
 public:
-    enum Type {PYRAMID, TRIANGLE_2D, SQUARE_3D};
+    enum Type {TRIANGLE_2D, SQUARE_3D, PYRAMID, STONE_PYRAMID};
 
     RotatingShape(GLuint, Camera*, Type);
 
