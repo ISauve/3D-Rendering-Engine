@@ -2,27 +2,36 @@
 #define OPENGL_OBJECT_H
 
 #include <glad/glad.h>
-#include <GLFW/glfw3.h>
+#include <string>
+#include <chrono>
+#include <vector>
 
 #include "Camera.h"
 class Camera;
 
 /*************************************************************
-                         Main Class
+                     Abstract Base Class
  *************************************************************/
 class Object {
 protected:
     GLuint _shaderProgram;
-    Camera _c;
+    GLuint _vao;
+    GLuint _vbo;
+    Camera* _c;
 
-    void storeToVBO(GLfloat*, int);
-    void storeToVBO(GLfloat*, int, GLfloat*, int);
-    void storeToEBO(GLuint*, int);
+    // Helpers
+    GLuint initializeVAO();
+    GLuint storeToVBO(GLfloat*, int);
+    GLuint storeToVBO(GLfloat*, int, GLfloat*, int);
+    GLuint storeToEBO(GLuint*, int);
+    GLuint storeTex(std::string, GLenum);
+    GLuint storeCubeMap(std::vector<std::string>&);
 
 public:
-    Object(GLuint, Camera&);
+    Object(GLuint s, Camera* c) : _shaderProgram(s), _c(c) {};
 
-    virtual void render(float) = 0;
+    virtual void render() {};
+    virtual void cleanUp() {};
 };
 
 
@@ -30,39 +39,39 @@ public:
                           Children
  *************************************************************/
 
-class Triangle : Object {
-public:
-    explicit Triangle(GLuint s, Camera& c) : Object(s, c) {};
+class SkyBox : public Object {
+    GLuint _ebo;
+    GLuint _cubeTex;
 
-    void render(float) override;
+public:
+    SkyBox(GLuint s, Camera* c);
+    void render() override;
+    void cleanUp() override;
 };
 
-class Square : Object {
+
+class RotatingShape : public Object {
+    std::chrono::time_point<std::chrono::high_resolution_clock> _start;
+    GLuint _ebo;
+
+    void initializePyramid();
+    void initialize2DTriangle();
+    void initialize3DSquare();
+
+    void renderPyramid();
+    void render2DTriangle();
+    void render3DSquare();
+
 public:
-    Square(GLuint s, Camera& c) : Object(s, c) {};
+    enum Type {PYRAMID, TRIANGLE_2D, SQUARE_3D};
 
-    void render(float) override;
-};
+    RotatingShape(GLuint, Camera*, Type);
 
-class RotatingSquare : Object {
-public:
-    RotatingSquare(GLuint s, Camera& c) : Object(s, c) {};
+    void render() override;
+    void cleanUp() override;
 
-    void render(float) override;
-};
-
-class RotatingSquare3D : Object {
-public:
-    RotatingSquare3D(GLuint s, Camera& c) : Object(s, c) {};
-
-    void render(float) override;
-};
-
-class RotatingPyramid : Object {
-public:
-    RotatingPyramid(GLuint s, Camera& c) : Object(s, c) {};
-
-    void render(float) override;
+private:
+    Type _type;
 };
 
 #endif

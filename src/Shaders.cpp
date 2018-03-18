@@ -5,7 +5,7 @@
 
 using namespace std;
 
-static const GLchar* ReadShader( const char* filename ) {
+static const GLchar* readShader( const char* filename ) {
     ifstream file(filename, ios::binary|ios::ate);
     if ( !file ) {
         cerr << "Unable to open " << filename << std::endl;
@@ -29,7 +29,7 @@ void cleanup(std::vector<ShaderInfo>& shaders) {
     }
 }
 
-GLuint LoadShaders( std::vector<ShaderInfo>& shaders ) {
+GLuint loadShaders( std::vector<ShaderInfo>& shaders ) {
     if ( shaders.empty() ) return 0;
 
     GLuint program = glCreateProgram();
@@ -39,7 +39,7 @@ GLuint LoadShaders( std::vector<ShaderInfo>& shaders ) {
         entry.shader = shader;
 
         // Read the shader file
-        const GLchar* source = ReadShader(entry.filename);
+        const GLchar* source = readShader(entry.filename);
         if (!source) {
             cerr << "Error reading " << entry.filename << endl;
             cleanup(shaders);
@@ -88,4 +88,16 @@ GLuint LoadShaders( std::vector<ShaderInfo>& shaders ) {
     }
 
     return program;
+}
+
+
+// Load the requested shader program
+GLuint fetchShader(string vtx, string frag) {
+    vtx = "src/shaders/" + vtx;
+    frag = "src/shaders/" + frag;
+    vector<ShaderInfo> shaders = {
+            { GL_VERTEX_SHADER,   vtx.c_str() },
+            { GL_FRAGMENT_SHADER, frag.c_str() }
+    };
+    return loadShaders(shaders);
 }

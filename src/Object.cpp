@@ -1,21 +1,27 @@
 #include "Object.h"
 
-Object::Object(GLuint s, Camera& c) : _shaderProgram(s), _c(c) {
-    // Create & bind a vertex array object
+#define STB_IMAGE_IMPLEMENTATION
+#include "stb_image.h"
+
+// Create & bind a vertex array object
+GLuint Object::initializeVAO() {
     GLuint vao;
     glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
+    return vao;
 }
 
-void Object::storeToVBO(GLfloat* vertices, int size) {
-    // Create, bind, and load data into a vertex buffer object
+// Create, bind, and load data into a vertex buffer object
+GLuint Object::storeToVBO(GLfloat* vertices, int size) {
     GLuint vbo;
-    glGenVertexArrays(1, &vbo);
+    glGenBuffers(1, &vbo);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, size, vertices, GL_STATIC_DRAW);
+    return vbo;
 }
 
-void Object::storeToVBO(GLfloat* positions, int sizeP, GLfloat* colors, int sizeC) {
+// Create, bind, and load data into a vertex buffer object
+GLuint Object::storeToVBO(GLfloat* positions, int sizeP, GLfloat* colors, int sizeC) {
     GLuint vbo;
     glGenBuffers(1, &vbo);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -35,12 +41,75 @@ void Object::storeToVBO(GLfloat* positions, int sizeP, GLfloat* colors, int size
                     sizeP,            // offset = sizeof previous data entered
                     sizeC,            // size
                     colors);          // data
+    return vbo;
 }
 
-void Object::storeToEBO(GLuint* indices, int size) {
-    // Create, bind, and load data into an element buffer object
+// Create, bind, and load data into an element buffer object
+GLuint Object::storeToEBO(GLuint* indices, int size) {
     GLuint ebo;
     glGenBuffers(1, &ebo);
     glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, ebo);
     glBufferData(GL_ELEMENT_ARRAY_BUFFER, size, indices, GL_STATIC_DRAW);
+    return ebo;
+}
+
+// Create, bind, and load data into a 2D texture object
+GLuint Object::storeTex(std::string path, GLenum wrapping) {
+    GLuint tex;
+    glGenTextures(1, &tex);
+    glBindTexture(GL_TEXTURE_2D, tex);
+
+    int width, height, nrChannels;
+    unsigned char* data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0);
+    if (data)  {
+        glTexImage2D(GL_TEXTURE_2D,
+                     0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        glGenerateMipmap(GL_TEXTURE_2D);
+
+        stbi_image_free(data);
+    } else {
+        std::cerr << path << " failed to load." << std::endl;
+        stbi_image_free(data);
+    }
+
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapping);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapping);
+
+    if (wrapping == GL_CLAMP_TO_BORDER) {
+        // Specify a border color
+        float borderColor[] = { 0.0f, 0.0f, 0.0f, 1.0f };   // black
+        glTexParameterfv(GL_TEXTURE_2D, GL_TEXTURE_BORDER_COLOR, borderColor);
+    }
+
+    return tex;
+}
+
+// Create, bind, and load data into a texture cube map
+GLuint Object::storeCubeMap(std::vector<std::string>& faces) {
+    GLuint tex;
+    glGenTextures(1, &tex);
+    glBindTexture(GL_TEXTURE_CUBE_MAP, tex);
+
+    int width, height, nrChannels;
+    for (int i = 0; i < faces.size(); i++) {
+        unsigned char* data = stbi_load(faces[i].c_str(), &width, &height, &nrChannels, 0);
+        if (data)  {
+            glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + i,
+                         0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+            stbi_image_free(data);
+        } else {
+            std::cerr << faces[i] << " failed to load." << std::endl;
+            stbi_image_free(data);
+        }
+    }
+
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
+    glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_WRAP_R, GL_CLAMP_TO_EDGE);
+
+    return tex;
 }
