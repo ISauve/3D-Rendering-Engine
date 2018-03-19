@@ -8,16 +8,15 @@ Scene::Scene(Camera* c) {
     _skybox = new SkyBox(fetchShader("cubemap.vtx", "cubemap.frag"), c);
 
     // Create the light source
-    glm::vec3 lightPos(-0.5f, 0.5f, -0.5f);
+    glm::vec3 lightPos(0.5f, 0.8f, 1.5f);
     glm::vec3 lightCol(1.0f, 1.0f, 1.0f);
-    _lightSrc = new LightSource(fetchShader("passThrough3D.vtx", "passThrough.frag"), c, lightPos, lightCol);
+    _lightSrc = new LightSource(fetchShader("phongShader.vtx", "phongShader.frag"), c, lightPos, lightCol);
 
     // Load objects in the scene
-    _objects.push_back(new Shape(fetchShader("passThrough.vtx", "triangle.frag"), c, Shape::Type::TRIANGLE_2D));
-    _objects.push_back(new Shape(fetchShader("passThrough.vtx", "passThrough.frag"), c, Shape::Type::SQUARE_3D));
-    _objects.push_back(new Shape(fetchShader("passThrough3D.vtx", "passThrough.frag"), c, Shape::Type::PYRAMID));
-    _objects.push_back(new Shape(fetchShader("textureLit.vtx", "textureLit.frag"), c, Shape::Type::STONE_PYRAMID, lightPos, lightCol));
-    _objects.push_back(new Ground(fetchShader("texture.vtx", "texture.frag"), c));
+    _objects.push_back(new Shape(fetchShader("phongShader.vtx", "phongShader.frag"), c, Shape::Type::SQUARE_3D, lightPos, lightCol));
+    _objects.push_back(new Shape(fetchShader("phongShader.vtx", "phongShader.frag"), c, Shape::Type::PYRAMID, lightPos, lightCol));
+    _objects.push_back(new Shape(fetchShader("phongShader.vtx", "phongShader.frag"), c, Shape::Type::STONE_PYRAMID, lightPos, lightCol));
+    _objects.push_back(new Ground(fetchShader("phongShader.vtx", "phongShader.frag"), c));
 }
 
 void Scene::draw() {

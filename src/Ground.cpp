@@ -40,7 +40,10 @@ Ground::Ground(GLuint s, Camera* c) : Object(s, c) {
     glVertexAttribPointer(colAttrib, 2, GL_FLOAT, GL_FALSE, 0, (void*)(sizeof(positions)));
     glEnableVertexAttribArray(colAttrib);
 
-    GLint uniTexSample = glGetUniformLocation(_shaderProgram, "textureSample");
+    GLint uniTextureObj = glGetUniformLocation(_shaderProgram, "textureObject");
+    glUniform1i(uniTextureObj, 1);
+
+    GLint uniTexSample = glGetUniformLocation(_shaderProgram, "sampleTexture");
     glUniform1i(uniTexSample, 1);
 }
 

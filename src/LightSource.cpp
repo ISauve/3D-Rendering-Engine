@@ -8,20 +8,20 @@ using namespace glm;
 LightSource::LightSource(GLuint s, Camera* c, glm::vec3 lightPos, glm::vec3 lightCol) : Object(s, c) {
     _vao = initializeVAO();
 
-    float sz = 0.1f;
+    float sz = 0.05f;
     float ns = -1 * sz;
 
     // Vertex data simply represents a small cube centered at the light position
     GLfloat points[] = {
             // Position                                                     // Color
-            sz + lightPos.x,  sz + lightPos.y, sz + lightPos.z,    lightCol.x, lightCol.y, lightCol.z,
-            sz + lightPos.x,  sz + lightPos.y, ns + lightPos.z,   lightCol.x, lightCol.y, lightCol.z,
-            sz + lightPos.x,  ns + lightPos.y, sz + lightPos.z,   lightCol.x, lightCol.y, lightCol.z,
+            sz + lightPos.x,  sz + lightPos.y, sz + lightPos.z,  lightCol.x, lightCol.y, lightCol.z,
+            sz + lightPos.x,  sz + lightPos.y, ns + lightPos.z,  lightCol.x, lightCol.y, lightCol.z,
+            sz + lightPos.x,  ns + lightPos.y, sz + lightPos.z,  lightCol.x, lightCol.y, lightCol.z,
             sz + lightPos.x,  ns + lightPos.y, ns + lightPos.z,  lightCol.x, lightCol.y, lightCol.z,
-            ns + lightPos.x,  sz + lightPos.y, sz + lightPos.z,   lightCol.x, lightCol.y, lightCol.z,
+            ns + lightPos.x,  sz + lightPos.y, sz + lightPos.z,  lightCol.x, lightCol.y, lightCol.z,
             ns + lightPos.x,  sz + lightPos.y, ns + lightPos.z,  lightCol.x, lightCol.y, lightCol.z,
             ns + lightPos.x,  ns + lightPos.y, sz + lightPos.z,  lightCol.x, lightCol.y, lightCol.z,
-            ns + lightPos.x,  ns + lightPos.y, ns + lightPos.z, lightCol.x, lightCol.y, lightCol.z
+            ns + lightPos.x,  ns + lightPos.y, ns + lightPos.z,  lightCol.x, lightCol.y, lightCol.z
     };
     _vbo = storeToVBO(points, sizeof(points));
     GLuint indices[] = {

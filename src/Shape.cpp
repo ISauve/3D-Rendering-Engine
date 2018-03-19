@@ -2,7 +2,7 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
-#include <glm/gtx/normal.hpp>
+#include <glm/gtx/fast_square_root.hpp>
 #include <chrono>
 
 using namespace glm;
@@ -69,6 +69,12 @@ void Shape::initialize2DTriangle() {
 }
 
 void Shape::initialize3DSquare() {
+    // Calculate the normal
+    vec3 a = vec3(-0.1f, 0.1f, 0.0);
+    vec3 b = vec3(0.1f, 0.1f, 0.0);
+    vec3 c = vec3(0.1f, -0.1f, 0.0);
+    vec3 normal = fastNormalize(cross(c - a, b - a));
+
     GLfloat positions[] = {
             -0.1f,  0.1f,  // Top-left
             0.1f,  0.1f,   // Top-right
@@ -81,7 +87,13 @@ void Shape::initialize3DSquare() {
             1.0f, 0.3f, 1.0f,  // Pink
             0.8f, 1.0f, 0.0f,  // Yellow
     };
-    _vbo = storeToVBO(positions, sizeof(positions), colors, sizeof(colors));
+    GLfloat normals[] = {
+            normal.x, normal.y, normal.z,
+            normal.x, normal.y, normal.z,
+            normal.x, normal.y, normal.z,
+            normal.x, normal.y, normal.z
+    };
+    _vbo = storeToVBO(positions, sizeof(positions), colors, sizeof(colors), normals, sizeof(normals));
 
     GLuint indices[] = {
             0, 1, 2,        // Triangle 1
@@ -100,6 +112,16 @@ void Shape::initialize3DSquare() {
                           0,                           // Consecutive values are tightly packed
                           (void*)(sizeof(positions))); // Color data is located after the positional data
     glEnableVertexAttribArray(colAttrib);
+
+    GLint normAttrib = glGetAttribLocation(_shaderProgram, "vNormal");
+    glVertexAttribPointer(normAttrib, 3, GL_FLOAT, GL_FALSE, 0,(void*)(sizeof(positions) + sizeof(colors)));
+    glEnableVertexAttribArray(normAttrib);
+
+    GLint uniLightCol = glGetUniformLocation(_shaderProgram, "lightColor");
+    glUniform3fv(uniLightCol, 1, value_ptr(_lightColor));
+
+    GLint uniLightPos = glGetUniformLocation(_shaderProgram, "lightPos");
+    glUniform3fv(uniLightPos, 1, value_ptr(_lightPos));
 };
 
 void Shape::initializePyramid() {
@@ -107,6 +129,16 @@ void Shape::initializePyramid() {
     float a = 0.15f;
     float h = 0.3f;
     float hh = a * sqrt(3.0f) / 2.0f;
+
+    // Calculate normals
+    vec3 peak = vec3(0.0f, h, hh);
+    vec3 bottomL = vec3(-1.0f * a, 0.0f, 0.0f);
+    vec3 bottomR = vec3(1.0f * a, 0.0f, 0.0f);
+    vec3 bottomFr = vec3(0.0f, 0.0f, h);
+    vec3 norm1 = fastNormalize(cross(peak - bottomL, bottomR - bottomL));
+    vec3 norm2 = fastNormalize(cross(bottomFr - bottomL, peak - bottomL));
+    vec3 norm3 = fastNormalize(cross(bottomFr - peak, bottomR - peak));
+    vec3 norm4 = fastNormalize(cross(bottomFr - bottomR, bottomL - bottomR));
 
     GLfloat positions[] = {
             // Back face
@@ -132,25 +164,42 @@ void Shape::initializePyramid() {
     GLfloat colors[] = {
             // Green face
             0.0f, 1.0f, 0.0f,
-            0.0f, 1.0f, 0.7f,
-            0.7f, 1.0f, 0.0f,
+            0.0f, 1.0f, 0.0f,
+            0.0f, 1.0f, 0.0f,
 
             // Red face
             1.0f, 0.0f, 0.0f,
-            1.0f, 0.0f, 0.5f,
-            1.0f, 0.5f, 0.0f,
+            1.0f, 0.0f, 0.0f,
+            1.0f, 0.0f, 0.0f,
 
             // Blue face
             0.0f, 0.0f, 1.0f,
-            0.0f, 0.8f, 1.0f,
-            0.8f, 0.0f, 1.0f,
+            0.0f, 0.0f, 1.0f,
+            0.0f, 0.0f, 1.0f,
 
             // Yellow face
             1.0f, 1.0f, 0.0f,
-            1.0f, 0.6f, 0.0f,
-            1.0f, 1.0f, 0.8f,
+            1.0f, 1.0f, 0.0f,
+            1.0f, 1.0f, 0.0f,
     };
-    _vbo = storeToVBO(positions, sizeof(positions), colors, sizeof(colors));
+    GLfloat normals[] = {
+            norm1.x, norm1.y, norm1.z,
+            norm1.x, norm1.y, norm1.z,
+            norm1.x, norm1.y, norm1.z,
+
+            norm2.x, norm2.y, norm2.z,
+            norm2.x, norm2.y, norm2.z,
+            norm2.x, norm2.y, norm2.z,
+
+            norm3.x, norm3.y, norm3.z,
+            norm3.x, norm3.y, norm3.z,
+            norm3.x, norm3.y, norm3.z,
+
+            norm4.x, norm4.y, norm4.z,
+            norm4.x, norm4.y, norm4.z,
+            norm4.x, norm4.y, norm4.z
+    };
+    _vbo = storeToVBO(positions, sizeof(positions), colors, sizeof(colors), normals, sizeof(normals));
 
     GLuint indices[] = {
             0, 1, 2,    // Front face
@@ -169,6 +218,16 @@ void Shape::initializePyramid() {
     GLint colAttrib = glGetAttribLocation(_shaderProgram, "vColor");
     glVertexAttribPointer(colAttrib, 3, GL_FLOAT, GL_FALSE, 0, (void*)(sizeof(positions)));
     glEnableVertexAttribArray(colAttrib);
+
+    GLint normAttrib = glGetAttribLocation(_shaderProgram, "vNormal");
+    glVertexAttribPointer(normAttrib, 3, GL_FLOAT, GL_FALSE, 0, (void*)(sizeof(positions) + sizeof(colors)));
+    glEnableVertexAttribArray(normAttrib);
+
+    GLint uniLightCol = glGetUniformLocation(_shaderProgram, "lightColor");
+    glUniform3fv(uniLightCol, 1, value_ptr(_lightColor));
+
+    GLint uniLightPos = glGetUniformLocation(_shaderProgram, "lightPos");
+    glUniform3fv(uniLightPos, 1, value_ptr(_lightPos));
 };
 
 void Shape::initializeStonePyramid() {
@@ -181,11 +240,10 @@ void Shape::initializeStonePyramid() {
     vec3 bottomL = vec3(-1.0f * a, 0.0f, 0.0f);
     vec3 bottomR = vec3(1.0f * a, 0.0f, 0.0f);
     vec3 bottomFr = vec3(0.0f, 0.0f, h);
-
-    vec3 norm1 = normalize(cross(bottomR - peak, bottomL - peak));
-    vec3 norm2 = normalize(cross(bottomL - peak, bottomFr - peak));
-    vec3 norm3 = normalize(cross(peak - bottomL, bottomFr - bottomL));
-    vec3 norm4 = normalize(cross(bottomFr - bottomL, bottomFr - bottomL));
+    vec3 norm1 = fastNormalize(cross(peak - bottomL, bottomR - bottomL));
+    vec3 norm2 = fastNormalize(cross(bottomFr - bottomL, peak - bottomL));
+    vec3 norm3 = fastNormalize(cross(bottomFr - peak, bottomR - peak));
+    vec3 norm4 = fastNormalize(cross(bottomFr - bottomR, bottomL - bottomR));
 
     GLfloat vertices[] = {
             // Position                // Texture    // Normals
@@ -234,7 +292,10 @@ void Shape::initializeStonePyramid() {
     GLint uniLightPos = glGetUniformLocation(_shaderProgram, "lightPos");
     glUniform3fv(uniLightPos, 1, value_ptr(_lightPos));
 
-    GLint uniSampleTex = glGetUniformLocation(_shaderProgram, "textureSample");
+    GLint uniTextureObj = glGetUniformLocation(_shaderProgram, "textureObject");
+    glUniform1i(uniTextureObj, 1);
+
+    GLint uniSampleTex = glGetUniformLocation(_shaderProgram, "sampleTexture");
     glUniform1i(uniSampleTex, 0);
 };
 
@@ -307,6 +368,10 @@ void Shape::render3DSquare() {
     GLint uniTransform = glGetUniformLocation(_shaderProgram, "MVP");
     glUniformMatrix4fv(uniTransform, 1, GL_FALSE, value_ptr(MVP));
 
+    // Pass just the model matrix to the shader
+    GLint uniModel = glGetUniformLocation(_shaderProgram, "Model");
+    glUniformMatrix4fv(uniModel, 1, GL_FALSE, value_ptr(model));
+
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 }
 
@@ -322,11 +387,15 @@ void Shape::renderPyramid() {
 
     // Pass the MVP matrix into our shader
     mat4 trans1 = translate(mat4(1.0f), vec3(0.0f, 0.0f, -0.129904f)); // translate to the center before rotation
-    mat4 trans2 = translate(mat4(1.0f), vec3(0.8f, -0.15f, 0.129904f));
+    mat4 trans2 = translate(mat4(1.0f), vec3(0.8f, 0.3f, -0.3));
     mat4 model = trans2 * rot * trans1;
     mat4 MVP = _c->ProjMatrix() * _c->ViewMatrix() * model;
     GLint uniTransform = glGetUniformLocation(_shaderProgram, "MVP");
     glUniformMatrix4fv(uniTransform, 1, GL_FALSE, value_ptr(MVP));
+
+    // Pass just the model matrix to the shader
+    GLint uniModel = glGetUniformLocation(_shaderProgram, "Model");
+    glUniformMatrix4fv(uniModel, 1, GL_FALSE, value_ptr(model));
 
     glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, nullptr);
 }
@@ -336,10 +405,14 @@ void Shape::renderStonePyramid() {
     glBindVertexArray(_vao);
     glUseProgram(_shaderProgram);
 
-    // Define a translation in x as a factor of time
+    // Define a translation in x & a rotation in z as a factor of time &
     auto now = std::chrono::high_resolution_clock::now();
     float timeDiff = std::chrono::duration_cast<std::chrono::duration<float>>(now - _start).count();
-    mat4 model = translate(mat4(1.0f), vec3(sin(timeDiff), 0.0f, 0.5f));
+
+    mat4 trans1 = translate(mat4(1.0f), vec3(0.0f, 0.0f, -0.129904f)); // translate to the center before rotation
+    mat4 rot = rotate(mat4(1.0f), -1 * timeDiff * 0.08f * radians(360.f), vec3(0.0f, 1.0f, 0.0f));
+    mat4 trans2 = translate(mat4(1.0f), vec3(sin(timeDiff), 0.0f, 0.129904f));
+    mat4 model = trans2 * rot * trans1;
 
     // Pass the MVP matrix into our shader
     mat4 MVP = _c->ProjMatrix() * _c->ViewMatrix() * model;

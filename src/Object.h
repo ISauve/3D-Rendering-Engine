@@ -23,6 +23,7 @@ protected:
     GLuint initializeVAO();
     GLuint storeToVBO(GLfloat*, int);
     GLuint storeToVBO(GLfloat*, int, GLfloat*, int);
+    GLuint storeToVBO(GLfloat*, int, GLfloat*, int, GLfloat*, int);
     GLuint storeToEBO(GLuint*, int);
     GLuint storeTex(std::string, GLenum);
     GLuint storeCubeMap(std::vector<std::string>&);

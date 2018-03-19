@@ -44,6 +44,21 @@ GLuint Object::storeToVBO(GLfloat* positions, int sizeP, GLfloat* colors, int si
     return vbo;
 }
 
+// Create, bind, and load data into a vertex buffer object
+GLuint Object::storeToVBO(GLfloat* positions, int sizeP, GLfloat* colors, int sizeC, GLfloat* normals, int sizeN) {
+    GLuint vbo;
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+
+    glBufferData(GL_ARRAY_BUFFER, sizeP + sizeC + sizeN, NULL, GL_STATIC_DRAW);
+
+    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeP, positions);
+    glBufferSubData(GL_ARRAY_BUFFER, sizeP, sizeC, colors);
+    glBufferSubData(GL_ARRAY_BUFFER, sizeP + sizeC, sizeN, normals);
+
+    return vbo;
+}
+
 // Create, bind, and load data into an element buffer object
 GLuint Object::storeToEBO(GLuint* indices, int size) {
     GLuint ebo;
