@@ -2,6 +2,7 @@
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
+#include <glm/gtx/normal.hpp>
 #include <chrono>
 
 using namespace glm;
@@ -174,23 +175,39 @@ void Shape::initializeStonePyramid() {
     float a = 0.15f;
     float h = 0.3f;
     float hh = a * sqrt(3.0f) / 2.0f;
+
+    // Calculate normals
+    vec3 peak = vec3(0.0f, h, hh);
+    vec3 bottomL = vec3(-1.0f * a, 0.0f, 0.0f);
+    vec3 bottomR = vec3(1.0f * a, 0.0f, 0.0f);
+    vec3 bottomFr = vec3(0.0f, 0.0f, h);
+
+    vec3 norm1 = normalize(cross(bottomR - peak, bottomL - peak));
+    vec3 norm2 = normalize(cross(bottomL - peak, bottomFr - peak));
+    vec3 norm3 = normalize(cross(peak - bottomL, bottomFr - bottomL));
+    vec3 norm4 = normalize(cross(bottomFr - bottomL, bottomFr - bottomL));
+
     GLfloat vertices[] = {
-            // Position                // Texture
-            0.0f,       h,     hh,     0.5f, 1.0f,
-            -1.0f * a,  0.0f,  0.0f,   0.0f, 0.0f,
-            1.0f * a,   0.0f,  0.0f,   1.0f, 0.0f,
+            // Position                // Texture    // Normals
+            // Back face
+            0.0f,       h,     hh,     0.5f, 1.0f,   norm1.x, norm1.y, norm1.z,
+            -1.0f * a,  0.0f,  0.0f,   0.0f, 0.0f,   norm1.x, norm1.y, norm1.z,
+            1.0f * a,   0.0f,  0.0f,   1.0f, 0.0f,   norm1.x, norm1.y, norm1.z,
 
-            0.0f,       h,     hh,     0.5f, 1.0f,
-            -1.0f * a,  0.0f,  0.0f,   0.0f, 0.0f,
-            0.0f,       0.0f,  h,      1.0f, 0.0f,
+            // Front left face
+            0.0f,       h,     hh,     0.5f, 1.0f,   norm2.x, norm2.y, norm2.z,
+            -1.0f * a,  0.0f,  0.0f,   0.0f, 0.0f,   norm2.x, norm2.y, norm2.z,
+            0.0f,       0.0f,  h,      1.0f, 0.0f,   norm2.x, norm2.y, norm2.z,
 
-            0.0f,       h,     hh,     0.5f, 1.0f,
-            0.0f,       0.0f,  h,      0.0f, 0.0f,
-            1.0f * a,   0.0f,  0.0f,   1.0f, 0.0f,
+            // Front right face
+            0.0f,       h,     hh,     0.5f, 1.0f,   norm3.x, norm3.y, norm3.z,
+            0.0f,       0.0f,  h,      0.0f, 0.0f,   norm3.x, norm3.y, norm3.z,
+            1.0f * a,   0.0f,  0.0f,   1.0f, 0.0f,   norm3.x, norm3.y, norm3.z,
 
-            -1.0f * a, 0.0f,  0.0f,    0.5f, 1.0f,
-            1.0f * a,  0.0f,  0.0f,    0.0f, 0.0f,
-            0.0f,      0.0f,  h,       1.0f, 0.0f
+            // Bottom face
+            -1.0f * a, 0.0f,  0.0f,    0.5f, 1.0f,   norm4.x, norm4.y, norm4.z,
+            1.0f * a,  0.0f,  0.0f,    0.0f, 0.0f,   norm4.x, norm4.y, norm4.z,
+            0.0f,      0.0f,  h,       1.0f, 0.0f,   norm4.x, norm4.y, norm4.z
     };
     _vbo = storeToVBO(vertices, sizeof(vertices));
 
@@ -200,12 +217,16 @@ void Shape::initializeStonePyramid() {
     // Tell OpenGL where to find/how to interpret the vertex data
     glUseProgram(_shaderProgram);
     GLint posAttrib = glGetAttribLocation(_shaderProgram, "vPosition");
-    glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 5*sizeof(float), 0);
+    glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), 0);
     glEnableVertexAttribArray(posAttrib);
 
     GLint texAttrib = glGetAttribLocation(_shaderProgram, "vTexture");
-    glVertexAttribPointer(texAttrib, 2, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void*)(3*sizeof(float)));
+    glVertexAttribPointer(texAttrib, 2, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)(3*sizeof(float)));
     glEnableVertexAttribArray(texAttrib);
+
+    GLint normAttrib = glGetAttribLocation(_shaderProgram, "vNormal");
+    glVertexAttribPointer(normAttrib, 3, GL_FLOAT, GL_FALSE, 8*sizeof(float), (void*)(5*sizeof(float)));
+    glEnableVertexAttribArray(normAttrib);
 
     GLint uniLightCol = glGetUniformLocation(_shaderProgram, "lightColor");
     glUniform3fv(uniLightCol, 1, value_ptr(_lightColor));
@@ -324,6 +345,10 @@ void Shape::renderStonePyramid() {
     mat4 MVP = _c->ProjMatrix() * _c->ViewMatrix() * model;
     GLint uniTransform = glGetUniformLocation(_shaderProgram, "MVP");
     glUniformMatrix4fv(uniTransform, 1, GL_FALSE, value_ptr(MVP));
+
+    // Pass just the model matrix to the shader
+    GLint uniModel = glGetUniformLocation(_shaderProgram, "Model");
+    glUniformMatrix4fv(uniModel, 1, GL_FALSE, value_ptr(model));
 
     glDrawArrays(GL_TRIANGLES, 0, 12 * 3);
 }
