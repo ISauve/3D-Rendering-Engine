@@ -8,6 +8,9 @@ using namespace glm;
 LightSource::LightSource(GLuint s, Camera* c, glm::vec3 lightPos, glm::vec3 lightCol) : Object(s, c) {
     _vao = initializeVAO();
 
+    _position = lightPos;
+    _color = lightCol;
+
     float sz = 0.05f;
     float ns = -1 * sz;
 

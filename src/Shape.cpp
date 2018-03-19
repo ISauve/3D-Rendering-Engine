@@ -51,6 +51,7 @@ void Shape::initialize2DTriangle() {
     };
 
     // Send the data to the OpenGL server by storing it in a buffer object
+
     _vbo = storeToVBO(vertices, sizeof(vertices));
 
     // Tell OpenGL where to find/how to interpret the vertex data
@@ -270,7 +271,7 @@ void Shape::initializeStonePyramid() {
     _vbo = storeToVBO(vertices, sizeof(vertices));
 
     // Load the texture
-    _tex = storeTex("assets/stones.jpg", GL_CLAMP_TO_BORDER);
+    _tex = storeTex("assets/stones.jpg", GL_CLAMP_TO_BORDER);   // increments the global counter
 
     // Tell OpenGL where to find/how to interpret the vertex data
     glUseProgram(_shaderProgram);
@@ -296,7 +297,7 @@ void Shape::initializeStonePyramid() {
     glUniform1i(uniTextureObj, 1);
 
     GLint uniSampleTex = glGetUniformLocation(_shaderProgram, "sampleTexture");
-    glUniform1i(uniSampleTex, 0);
+    glUniform1i(uniSampleTex, textureCounter-1);
 };
 
 
@@ -372,6 +373,10 @@ void Shape::render3DSquare() {
     GLint uniModel = glGetUniformLocation(_shaderProgram, "Model");
     glUniformMatrix4fv(uniModel, 1, GL_FALSE, value_ptr(model));
 
+    // Pass the camera's position
+    GLint uniPosn = glGetUniformLocation(_shaderProgram, "viewPos");
+    glUniform3fv(uniPosn, 1, value_ptr(_c->Position()));
+
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 }
 
@@ -396,6 +401,10 @@ void Shape::renderPyramid() {
     // Pass just the model matrix to the shader
     GLint uniModel = glGetUniformLocation(_shaderProgram, "Model");
     glUniformMatrix4fv(uniModel, 1, GL_FALSE, value_ptr(model));
+
+    // Pass the camera's position
+    GLint uniPosn = glGetUniformLocation(_shaderProgram, "viewPos");
+    glUniform3fv(uniPosn, 1, value_ptr(_c->Position()));
 
     glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, nullptr);
 }
@@ -422,6 +431,10 @@ void Shape::renderStonePyramid() {
     // Pass just the model matrix to the shader
     GLint uniModel = glGetUniformLocation(_shaderProgram, "Model");
     glUniformMatrix4fv(uniModel, 1, GL_FALSE, value_ptr(model));
+
+    // Pass the camera's position
+    GLint uniPosn = glGetUniformLocation(_shaderProgram, "viewPos");
+    glUniform3fv(uniPosn, 1, value_ptr(_c->Position()));
 
     glDrawArrays(GL_TRIANGLES, 0, 12 * 3);
 }

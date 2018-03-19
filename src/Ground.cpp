@@ -28,7 +28,7 @@ Ground::Ground(GLuint s, Camera* c) : Object(s, c) {
     };
     _ebo = storeToEBO(indices, sizeof(indices));
 
-    _tex = storeTex("assets/grass.jpg", GL_REPEAT);
+    _tex = storeTex("assets/grass.jpg", GL_REPEAT); // increments the global texture counter
 
     // Tell OpenGL where to find/how to interpret the vertex data
     glUseProgram(_shaderProgram);
@@ -44,7 +44,7 @@ Ground::Ground(GLuint s, Camera* c) : Object(s, c) {
     glUniform1i(uniTextureObj, 1);
 
     GLint uniTexSample = glGetUniformLocation(_shaderProgram, "sampleTexture");
-    glUniform1i(uniTexSample, 1);
+    glUniform1i(uniTexSample, textureCounter-1);
 }
 
 void Ground::render() {

@@ -10,6 +10,8 @@ class Scene {
     SkyBox* _skybox;
     LightSource* _lightSrc;
 
+    static int _texID;
+
     void printErr(GLenum);
 
 public:
@@ -18,5 +20,6 @@ public:
     void draw();
     void cleanUp();
 };
+
 
 #endif //OPENGL_SCENE_H

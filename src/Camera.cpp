@@ -27,6 +27,10 @@ mat4 Camera::ProjMatrix() {
                        100.0f);          // "far" clipping plane
 }
 
+vec3 Camera::Position() {
+    return _position;
+}
+
 void Camera::Move(Direction d) {
     float dt = 0.01f;
 

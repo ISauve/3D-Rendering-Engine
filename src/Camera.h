@@ -31,6 +31,7 @@ public:
 
     glm::mat4 ViewMatrix();
     glm::mat4 ProjMatrix();
+    glm::vec3 Position();
 
     void Move(Direction);
     void Look(double xoffset, double yoffset);

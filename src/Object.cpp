@@ -69,12 +69,12 @@ GLuint Object::storeToEBO(GLuint* indices, int size) {
 }
 
 // Create, bind, and load data into a 2D texture object
-int texCount = 0;
+int textureCounter = 0; // initialize the global counter
 GLuint Object::storeTex(std::string path, GLenum wrapping) {
     GLuint tex;
     glGenTextures(1, &tex);
-    glActiveTexture(GL_TEXTURE0 + texCount);
-    texCount++;
+    glActiveTexture(GL_TEXTURE0 + textureCounter);
+    textureCounter++;
 
     glBindTexture(GL_TEXTURE_2D, tex);
 

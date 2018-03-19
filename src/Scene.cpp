@@ -17,6 +17,27 @@ Scene::Scene(Camera* c) {
     _objects.push_back(new Shape(fetchShader("phongShader.vtx", "phongShader.frag"), c, Shape::Type::PYRAMID, lightPos, lightCol));
     _objects.push_back(new Shape(fetchShader("phongShader.vtx", "phongShader.frag"), c, Shape::Type::STONE_PYRAMID, lightPos, lightCol));
     _objects.push_back(new Ground(fetchShader("phongShader.vtx", "phongShader.frag"), c));
+
+    Cube* testCube = new Cube(fetchShader("phongShader.vtx", "phongShader.frag"), c, _lightSrc);
+    testCube->set2DTexture("assets/grass.jpg");
+    testCube->setPosition(glm::vec3(-0.8, 0.2, 0.0));
+    testCube->setSize(0.1);
+    _objects.push_back(testCube);
+
+    Cube* testCube2 = new Cube(fetchShader("phongShader.vtx", "phongShader.frag"), c, _lightSrc);
+    testCube2->setColor(glm::vec3(0.3, 0.5, 0.8));
+    testCube2->setPosition(glm::vec3(-0.1, -0.35, 0.5));
+    testCube2->setSize(0.3);
+    testCube2->isLit(true);
+    testCube2->setRotation(glm::vec3(0.0, 0.0, 1.0), 0.1);
+    _objects.push_back(testCube2);
+
+    Cube* testCube3 = new Cube(fetchShader("phongShader.vtx", "phongShader.frag"), c, _lightSrc);
+    testCube3->set2DTexture("assets/stones.jpg");
+    testCube3->setPosition(glm::vec3(0.3, 0.2, 0.0));
+    testCube3->setSize(0.2);
+    testCube3->isLit(true);
+    _objects.push_back(testCube3);
 }
 
 void Scene::draw() {

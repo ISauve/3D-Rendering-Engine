@@ -3,6 +3,7 @@
 // Lighting data (optional)
 uniform vec3 lightColor;
 uniform vec3 lightPos;
+uniform vec3 viewPos;
 in vec3 Normal;
 in vec3 WorldCoords;
 
@@ -26,8 +27,13 @@ void main() {
 
     // Implement the Phong lighting model, if lighting details have been passed
     if (lightPos != vec3(0.0) && lightColor != vec3(0.0)) {
-        /* 1) Ambient lighting */
+        /* Configurable parameters */
         float ambientStr = 0.4;
+        float diffStr = 1.0;
+        float specularStrength = 0.8;
+        float specularShine = 32;   // Higher -> reflection is more "dense" (not diffused)
+
+        /* 1) Ambient lighting */
         vec3 ambient = ambientStr * lightColor;
 
         /* 2) Diffuse lighting */
@@ -36,20 +42,25 @@ void main() {
         vec3 lightDir = normalize(lightPos - WorldCoords);
 
         // Calculate the diffuse light "impact" by taking the dot product of lightDir & the surface normal
-        float diffStr = dot(norm, lightDir);
-        diffStr = max(diffStr, 0.0);    // make sure the value is not negative
-        vec3 diffuse = diffStr * lightColor;
+        float diffImpact = dot(norm, lightDir);
+        diffImpact = max(diffImpact, 0.0);    // make sure the value is not negative
+        vec3 diffuse = diffStr * diffImpact * lightColor;
 
         /* 3) Specular lighting */
-        // TODO
+        // Calculate the amount of reflection we'd see from our viewing position
+        vec3 viewDir = normalize(viewPos - WorldCoords);
+        vec3 reflectDir = reflect(-lightDir, norm); // negative bc needs to be from light source to fragment
+        float specImpact = max(dot(viewDir, reflectDir), 0.0);
+        specImpact = pow(specImpact, specularShine);
+        vec3 specular = specularStrength * specImpact * lightColor;
 
-        lighting = vec4(ambient + diffuse, 1.0);
+        lighting = vec4(ambient + diffuse + specular, 1.0);
     }
 
     if (textureObject) {
         outColor = texture(sampleTexture, TexCoords2D) * lighting;
     } else if (cubeObject) {
-        // TODO there is a bug here (comiles but -> invalid op)
+        // TODO there is a bug here (compiles but -> invalid op)
         //outColor = texture(smpleCube, TexCoords3D);
         //outColor = texture(sampleCube, TexCoords3D) * lighting;
     } else {

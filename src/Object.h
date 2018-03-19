@@ -16,7 +16,11 @@ class Object {
 protected:
     GLuint _shaderProgram;
     GLuint _vao;
+
     GLuint _vbo;
+    std::vector <GLuint> _bufferIDs;
+    std::vector <GLuint> _textureIDs;
+
     Camera* _c;
 
     // Helpers
@@ -35,6 +39,8 @@ public:
     virtual void cleanUp() {};
 };
 
+// Global texture counter
+extern int textureCounter;
 
 /*************************************************************
                           Children
@@ -50,14 +56,23 @@ public:
     void cleanUp() override;
 };
 
+
+
 class LightSource : public Object {
     GLuint _ebo;
+    glm::vec3 _position;
+    glm::vec3 _color;
 
 public:
     LightSource(GLuint, Camera*, glm::vec3, glm::vec3);
     void render() override;
     void cleanUp() override;
+
+    glm::vec3 Position() { return _position; };
+    glm::vec3 Color() { return _color; };
 };
+
+
 
 class Ground : public Object {
     GLuint _ebo;
@@ -68,6 +83,8 @@ public:
     void render() override;
     void cleanUp() override;
 };
+
+
 
 class Shape : public Object {
     std::chrono::time_point<std::chrono::high_resolution_clock> _start;
@@ -97,6 +114,36 @@ public:
 
 private:
     Type _type;
+};
+
+
+
+class Cube : public Object {
+    std::chrono::time_point<std::chrono::high_resolution_clock> _start;
+
+    LightSource* _lightSrc;
+    bool _lit;
+
+    glm::vec3 _position;
+    float _size;
+    glm::vec3 _rotationAxis;
+    float _rotationSpeed;
+
+public:
+    Cube(GLuint, Camera*, LightSource*);
+
+    void render() override;
+    void cleanUp() override;
+
+    // Modifiers
+    void isLit(bool b) { _lit = b; };
+    void setPosition(glm::vec3 p) { _position = p; };
+    void setSize(float s) { _size = s; };
+    void setRotation(glm::vec3 axis, float speed) { _rotationAxis = axis; _rotationSpeed = speed; };
+
+    void setColor(glm::vec3);           // Applies a uniform color
+    void setColors(GLfloat*, int);      // Applies a custom color data for each vertex
+    void set2DTexture(std::string);     // Applies texture to each face
 };
 
 #endif
