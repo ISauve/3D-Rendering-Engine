@@ -14,6 +14,9 @@ class Camera {
     glm::vec3 _facing;     // Direction camera is facing (default = -Z)
     glm::vec3 _up;         // World "up" direction (Y axis)
 
+    GLfloat _height;
+    GLfloat _jumpTime;
+
     // Euler angles
     GLfloat _yaw;          // Rotation to the left or right
     GLfloat _pitch;        // Rotation up or down
@@ -31,6 +34,10 @@ public:
 
     void Move(Direction);
     void Look(double xoffset, double yoffset);
+
+    void isDucking(bool);
+    void Jump();
+    void Tick();
 
     void getID() {
         std::cout << "Camera " << this << std::endl;

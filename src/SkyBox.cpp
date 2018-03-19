@@ -68,7 +68,6 @@ SkyBox::SkyBox(GLuint s, Camera* c) : Object(s, c){
 void SkyBox::render() {
     // Bind the skybox's data
     glBindVertexArray(_vao);
-    glActiveTexture(GL_TEXTURE0);
     glUseProgram(_shaderProgram);
 
     // Turn off the depth test (so that it always gets overwritten)

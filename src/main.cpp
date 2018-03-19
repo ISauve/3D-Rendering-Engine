@@ -57,6 +57,7 @@ int main(int argc, char** argv) {
         // Pause for an appropriate amount of time to achieve desired frame rate
         auto msPerFrame = int (1.0 / (FPS / 1000.0));
         this_thread::sleep_until(loopStart + chrono::milliseconds(msPerFrame));
+        c.Tick();
     }
 
     scene.cleanUp();
@@ -93,6 +94,9 @@ bool handleInput (Camera& c, GLFWwindow* window) {
     if (glfwGetKey(window, GLFW_KEY_D)) c.Move(RIGHT);
     if (glfwGetKey(window, GLFW_KEY_W)) c.Move(FORWARD);
     if (glfwGetKey(window, GLFW_KEY_S)) c.Move(BACKWARD);
+
+    if (glfwGetKey(window, GLFW_KEY_SPACE)) c.Jump();
+    c.isDucking(glfwGetKey(window, GLFW_KEY_DOWN));
     return false;
 }
 

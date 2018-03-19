@@ -7,11 +7,17 @@ Scene::Scene(Camera* c) {
     // Create the skybox
     _skybox = new SkyBox(fetchShader("cubemap.vtx", "cubemap.frag"), c);
 
+    // Create the light source
+    glm::vec3 lightPos(-0.5f, 0.5f, 1.0f);
+    glm::vec3 lightCol(1.0f, 1.0f, 1.0f);
+    _lightSrc = new LightSource(fetchShader("passThrough3D.vtx", "passThrough.frag"), c, lightPos, lightCol);
+
     // Load objects in the scene
-    _objects.push_back(new RotatingShape(fetchShader("passThrough3D.vtx", "passThrough.frag"), c, RotatingShape::Type::PYRAMID));
-    _objects.push_back(new RotatingShape(fetchShader("texture.vtx", "texture.frag"), c, RotatingShape::Type::STONE_PYRAMID));
-    _objects.push_back(new RotatingShape(fetchShader("passThrough.vtx", "triangle.frag"), c, RotatingShape::Type::TRIANGLE_2D));
-    _objects.push_back(new RotatingShape(fetchShader("passThrough.vtx", "passThrough.frag"), c, RotatingShape::Type::SQUARE_3D));
+    _objects.push_back(new Shape(fetchShader("passThrough.vtx", "triangle.frag"), c, Shape::Type::TRIANGLE_2D));
+    _objects.push_back(new Shape(fetchShader("passThrough.vtx", "passThrough.frag"), c, Shape::Type::SQUARE_3D));
+    _objects.push_back(new Shape(fetchShader("passThrough3D.vtx", "passThrough.frag"), c, Shape::Type::PYRAMID));
+    _objects.push_back(new Shape(fetchShader("texture.vtx", "texture.frag"), c, Shape::Type::STONE_PYRAMID, lightPos, lightCol));
+    _objects.push_back(new Ground(fetchShader("texture.vtx", "texture.frag"), c));
 }
 
 void Scene::draw() {
@@ -29,6 +35,7 @@ void Scene::draw() {
 
     // Render our objects
     _skybox->render();  // always 1st
+    _lightSrc->render();
     for (auto it : _objects)
         it->render();
 

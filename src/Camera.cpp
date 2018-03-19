@@ -9,6 +9,8 @@ Camera::Camera(double xpos, double ypos) {
     _up = vec3(0.0f, 1.0f, 0.0f);
     _yaw = -90.0f;
     _pitch = 0.0f;
+    _height = 0.0f;
+    _jumpTime = -1.0f;
     _mouseSensitivity = 0.15f;
     _xpos = xpos;
     _ypos = ypos;
@@ -21,7 +23,7 @@ mat4 Camera::ViewMatrix() {
 mat4 Camera::ProjMatrix() {
     return perspective(radians(45.0f),   // vertical FOV
                        600.0f / 600.0f,  // aspect ratio
-                       0.3f,             // "near" clipping plane
+                       0.1f,             // "near" clipping plane
                        100.0f);          // "far" clipping plane
 }
 
@@ -44,9 +46,36 @@ void Camera::Move(Direction d) {
         default: break;
     }
 
-    // Keep the player "standing" on the ground
-    _position.y = 0.0f;
+    _position.y = _height;
 }
+
+void Camera::isDucking(bool b) {
+    if (b) _height = -0.15f;
+    else _height = 0.0f;
+    _position.y = _height;
+}
+
+void Camera::Jump() {
+    // Start a jump (if we're not currently in one)
+    if (_jumpTime == -1) _jumpTime = 0;
+}
+
+// This fcn gets called approximately once every 0.016 seconds (1/60 FPS)
+void Camera::Tick() {
+    if (_jumpTime == -1) return;  // don't do anything if we're not jumping
+
+    _height = 3.0f * _jumpTime + 0.5f * -9.8f * _jumpTime * _jumpTime;
+    _position.y = _height;
+    _jumpTime += 0.016;
+
+    if (_height < 0) {
+        _height = 0.0f;
+        _position.y = _height;
+        _jumpTime = -1;
+    }
+}
+
+
 
 void Camera::Look(double xpos, double ypos) {
     GLfloat xoffset = xpos - _xpos; // x coords increase from left to right

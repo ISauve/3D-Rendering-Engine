@@ -8,6 +8,7 @@
 class Scene {
     std::vector<Object*> _objects;
     SkyBox* _skybox;
+    LightSource* _lightSrc;
 
     void printErr(GLenum);
 

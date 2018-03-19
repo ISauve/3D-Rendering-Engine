@@ -54,9 +54,13 @@ GLuint Object::storeToEBO(GLuint* indices, int size) {
 }
 
 // Create, bind, and load data into a 2D texture object
+int texCount = 0;
 GLuint Object::storeTex(std::string path, GLenum wrapping) {
     GLuint tex;
     glGenTextures(1, &tex);
+    glActiveTexture(GL_TEXTURE0 + texCount);
+    texCount++;
+
     glBindTexture(GL_TEXTURE_2D, tex);
 
     int width, height, nrChannels;
@@ -90,6 +94,7 @@ GLuint Object::storeTex(std::string path, GLenum wrapping) {
 GLuint Object::storeCubeMap(std::vector<std::string>& faces) {
     GLuint tex;
     glGenTextures(1, &tex);
+    glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_CUBE_MAP, tex);
 
     int width, height, nrChannels;

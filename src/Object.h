@@ -44,16 +44,37 @@ class SkyBox : public Object {
     GLuint _cubeTex;
 
 public:
-    SkyBox(GLuint s, Camera* c);
+    SkyBox(GLuint, Camera*);
     void render() override;
     void cleanUp() override;
 };
 
+class LightSource : public Object {
+    GLuint _ebo;
 
-class RotatingShape : public Object {
+public:
+    LightSource(GLuint, Camera*, glm::vec3, glm::vec3);
+    void render() override;
+    void cleanUp() override;
+};
+
+class Ground : public Object {
+    GLuint _ebo;
+    GLuint _tex;
+
+public:
+    Ground(GLuint, Camera*);
+    void render() override;
+    void cleanUp() override;
+};
+
+class Shape : public Object {
     std::chrono::time_point<std::chrono::high_resolution_clock> _start;
     GLuint _ebo;
     GLuint _tex;
+
+    glm::vec3 _lightPos;
+    glm::vec3 _lightColor;
 
     void initialize2DTriangle();
     void initialize3DSquare();
@@ -68,7 +89,7 @@ class RotatingShape : public Object {
 public:
     enum Type {TRIANGLE_2D, SQUARE_3D, PYRAMID, STONE_PYRAMID};
 
-    RotatingShape(GLuint, Camera*, Type);
+    Shape(GLuint, Camera*, Type, glm::vec3 = glm::vec3(1.0f), glm::vec3 = glm::vec3(1.0f));
 
     void render() override;
     void cleanUp() override;

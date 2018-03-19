@@ -10,10 +10,13 @@ using namespace glm;
                           Constructors
  *************************************************************/
 
-RotatingShape::RotatingShape(GLuint s, Camera* c, Type type) : Object(s, c) {
+Shape::Shape(GLuint s, Camera* c, Type type, vec3 lightPos, vec3 lightCol) : Object(s, c) {
     _start = std::chrono::high_resolution_clock::now();
     _vao = initializeVAO();
+
     _type = type;
+    _lightPos = lightPos;
+    _lightColor = lightCol;
 
     switch (type) {
             break;
@@ -35,7 +38,7 @@ RotatingShape::RotatingShape(GLuint s, Camera* c, Type type) : Object(s, c) {
     }
 }
 
-void RotatingShape::initialize2DTriangle() {
+void Shape::initialize2DTriangle() {
     // Equilateral pyramid with side length s = 0.2
     float a = 0.1f;
     float h = a * sqrt(3.0f);
@@ -47,7 +50,7 @@ void RotatingShape::initialize2DTriangle() {
     };
 
     // Send the data to the OpenGL server by storing it in a buffer object
-    storeToVBO(vertices, sizeof(vertices));
+    _vbo = storeToVBO(vertices, sizeof(vertices));
 
     // Tell OpenGL where to find/how to interpret the vertex data
     glUseProgram(_shaderProgram);
@@ -64,7 +67,7 @@ void RotatingShape::initialize2DTriangle() {
     glEnableVertexAttribArray(colAttrib);
 }
 
-void RotatingShape::initialize3DSquare() {
+void Shape::initialize3DSquare() {
     GLfloat positions[] = {
             -0.1f,  0.1f,  // Top-left
             0.1f,  0.1f,   // Top-right
@@ -98,7 +101,7 @@ void RotatingShape::initialize3DSquare() {
     glEnableVertexAttribArray(colAttrib);
 };
 
-void RotatingShape::initializePyramid() {
+void Shape::initializePyramid() {
     // Pyramid with bottom side length s = 0.3, height = 0.3
     float a = 0.15f;
     float h = 0.3f;
@@ -167,7 +170,7 @@ void RotatingShape::initializePyramid() {
     glEnableVertexAttribArray(colAttrib);
 };
 
-void RotatingShape::initializeStonePyramid() {
+void Shape::initializeStonePyramid() {
     float a = 0.15f;
     float h = 0.3f;
     float hh = a * sqrt(3.0f) / 2.0f;
@@ -187,7 +190,7 @@ void RotatingShape::initializeStonePyramid() {
 
             -1.0f * a, 0.0f,  0.0f,    0.5f, 1.0f,
             1.0f * a,  0.0f,  0.0f,    0.0f, 0.0f,
-            0.0f,      0.0f,  h,       1.0f, 0.0f,
+            0.0f,      0.0f,  h,       1.0f, 0.0f
     };
     _vbo = storeToVBO(vertices, sizeof(vertices));
 
@@ -204,8 +207,14 @@ void RotatingShape::initializeStonePyramid() {
     glVertexAttribPointer(texAttrib, 2, GL_FLOAT, GL_FALSE, 5*sizeof(float), (void*)(3*sizeof(float)));
     glEnableVertexAttribArray(texAttrib);
 
-    GLint sampleTex = glGetUniformLocation(_shaderProgram, "textureSample");
-    glUniform1i(sampleTex, 0);
+    GLint uniLightCol = glGetUniformLocation(_shaderProgram, "lightColor");
+    glUniform3fv(uniLightCol, 1, value_ptr(_lightColor));
+
+    GLint uniLightPos = glGetUniformLocation(_shaderProgram, "lightPos");
+    glUniform3fv(uniLightPos, 1, value_ptr(_lightPos));
+
+    GLint uniSampleTex = glGetUniformLocation(_shaderProgram, "textureSample");
+    glUniform1i(uniSampleTex, 0);
 };
 
 
@@ -213,7 +222,7 @@ void RotatingShape::initializeStonePyramid() {
                           Rendering
  *************************************************************/
 
-void RotatingShape::render() {
+void Shape::render() {
     switch (_type) {
             break;
         case TRIANGLE_2D:
@@ -232,7 +241,7 @@ void RotatingShape::render() {
     }
 }
 
-void RotatingShape::render2DTriangle() {
+void Shape::render2DTriangle() {
     // Bind the triangle's data
     glBindVertexArray(_vao);
     glUseProgram(_shaderProgram);
@@ -258,7 +267,7 @@ void RotatingShape::render2DTriangle() {
     glDrawArrays(GL_TRIANGLES, 0, 3);
 }
 
-void RotatingShape::render3DSquare() {
+void Shape::render3DSquare() {
     // Bind the square's data
     glBindVertexArray(_vao);
     glUseProgram(_shaderProgram);
@@ -280,7 +289,7 @@ void RotatingShape::render3DSquare() {
     glDrawElements(GL_TRIANGLES, 6, GL_UNSIGNED_INT, nullptr);
 }
 
-void RotatingShape::renderPyramid() {
+void Shape::renderPyramid() {
     // Bind the pyramid's data
     glBindVertexArray(_vao);
     glUseProgram(_shaderProgram);
@@ -301,20 +310,17 @@ void RotatingShape::renderPyramid() {
     glDrawElements(GL_TRIANGLES, 12, GL_UNSIGNED_INT, nullptr);
 }
 
-void RotatingShape::renderStonePyramid() {
+void Shape::renderStonePyramid() {
     // Bind the pyramid's data
     glBindVertexArray(_vao);
     glUseProgram(_shaderProgram);
 
-    // Define a rotation around y as a factor of time
+    // Define a translation in x as a factor of time
     auto now = std::chrono::high_resolution_clock::now();
     float timeDiff = std::chrono::duration_cast<std::chrono::duration<float>>(now - _start).count();
-    mat4 rot = rotate(mat4(1.0f), -1 * timeDiff * 0.05f * radians(360.f), vec3(0.0f, 1.0f, 0.0f));
+    mat4 model = translate(mat4(1.0f), vec3(sin(timeDiff), 0.0f, 0.5f));
 
     // Pass the MVP matrix into our shader
-    mat4 trans1 = translate(mat4(1.0f), vec3(0.0f, 0.0f, -0.129904f));
-    mat4 trans2 = translate(mat4(1.0f), vec3(1.3f, -0.15f, 0.129904f));
-    mat4 model = trans2 * rot * trans1;
     mat4 MVP = _c->ProjMatrix() * _c->ViewMatrix() * model;
     GLint uniTransform = glGetUniformLocation(_shaderProgram, "MVP");
     glUniformMatrix4fv(uniTransform, 1, GL_FALSE, value_ptr(MVP));
@@ -327,7 +333,7 @@ void RotatingShape::renderStonePyramid() {
                             Other
  *************************************************************/
 
-void RotatingShape::cleanUp() {
+void Shape::cleanUp() {
     glDeleteVertexArrays(1, &_vao);
     glDeleteBuffers(1, &_vbo);
     if (_ebo != 0) glDeleteBuffers(1, &_ebo);
