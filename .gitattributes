@@ -1,6 +1,6 @@
 # Manually ignore src/glad.c from linguist statistics
 # as it's the GLAD extension loader, not written by me
-src/glad.c linguist-vendored=true
+glad.c linguist-vendored=true
 
 # Same with src/stb_image.h
 src/stb_image.h linguist-vendored=true
