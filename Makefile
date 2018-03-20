@@ -11,7 +11,7 @@ CXXFLAGS = -Wall -O -g
 LIBFLAGS = -Ibuild/include glad.c -lGLFW -framework OpenGL -framework CoreFoundation
 
 # compile all .cpp files in source directory & it's subdirectories
-SOURCES = $(wildcard $(SRC_DIR)/*.cpp)
+SOURCES = $(wildcard $(SRC_DIR)/*.cpp  $(SRC_DIR)/*/*.cpp)
 
 # .o files depend upon .cpp files with same names
 OBJECTS = $(patsubst $(SRC_DIR)/%, $(BUILD_DIR)/%, $(SOURCES:.cpp=.o))

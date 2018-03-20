@@ -3,6 +3,6 @@ project(openGL)
 
 set(CMAKE_CXX_STANDARD 14)
 set(CMAKE_SHARED_LINKER_FLAGS "-lGLAD -lGLFW -framework OpenGL")
-set(SOURCE_FILES Makefile README.md src src/main.cpp src/Cube.cpp src/Cube.cpp)
+set(SOURCE_FILES Makefile README.md src src/main.cpp src/Cube.cpp src/Cube.cpp src/Shape.cpp src/Square.cpp)
 
 add_executable(openGL ${SOURCE_FILES})

@@ -4,6 +4,8 @@
 using namespace std;
 
 Scene::Scene(Camera* c) {
+    _isLit = true;
+
     // Create the skybox
     _skybox = new SkyBox(fetchShader("cubemap.vtx", "cubemap.frag"), c);
 
@@ -12,32 +14,38 @@ Scene::Scene(Camera* c) {
     glm::vec3 lightCol(1.0f, 1.0f, 1.0f);
     _lightSrc = new LightSource(fetchShader("phongShader.vtx", "phongShader.frag"), c, lightPos, lightCol);
 
-    // Load objects in the scene
-    _objects.push_back(new Shape(fetchShader("phongShader.vtx", "phongShader.frag"), c, Shape::Type::SQUARE_3D, lightPos, lightCol));
-    _objects.push_back(new Shape(fetchShader("phongShader.vtx", "phongShader.frag"), c, Shape::Type::PYRAMID, lightPos, lightCol));
-    _objects.push_back(new Shape(fetchShader("phongShader.vtx", "phongShader.frag"), c, Shape::Type::STONE_PYRAMID, lightPos, lightCol));
-    _objects.push_back(new Ground(fetchShader("phongShader.vtx", "phongShader.frag"), c));
+    // Load shapes in the scene
+    Square* ground = new Square(fetchShader("phongShader.vtx", "phongShader.frag"), c, _lightSrc);
+    ground->set2DTexture("assets/grass.jpg");
 
-    Cube* testCube = new Cube(fetchShader("phongShader.vtx", "phongShader.frag"), c, _lightSrc);
-    testCube->set2DTexture("assets/grass.jpg");
-    testCube->setPosition(glm::vec3(-0.8, 0.2, 0.0));
-    testCube->setSize(0.1);
-    _objects.push_back(testCube);
+    Cube* cube1 = new Cube(fetchShader("phongShader.vtx", "phongShader.frag"), c, _lightSrc);
+    cube1->set2DTexture("assets/crate.jpeg");
+    cube1->setPosition(glm::vec3(-0.6, 0.2, 0.0));
+    cube1->setSize(0.1);
 
-    Cube* testCube2 = new Cube(fetchShader("phongShader.vtx", "phongShader.frag"), c, _lightSrc);
-    testCube2->setColor(glm::vec3(0.3, 0.5, 0.8));
-    testCube2->setPosition(glm::vec3(-0.1, -0.35, 0.5));
-    testCube2->setSize(0.3);
-    testCube2->isLit(true);
-    testCube2->setRotation(glm::vec3(0.0, 0.0, 1.0), 0.1);
-    _objects.push_back(testCube2);
+    Cube* cube2 = new Cube(fetchShader("phongShader.vtx", "phongShader.frag"), c, _lightSrc);
+    cube2->set2DTexture("assets/stones.jpg");
+    cube2->setPosition(glm::vec3(-0.2, 0.15, 0.5));
+    cube2->setSize(0.15);
+    cube2->setRotation(glm::vec3(0.0, 1.0, 1.0), 0.1);
 
-    Cube* testCube3 = new Cube(fetchShader("phongShader.vtx", "phongShader.frag"), c, _lightSrc);
-    testCube3->set2DTexture("assets/stones.jpg");
-    testCube3->setPosition(glm::vec3(0.3, 0.2, 0.0));
-    testCube3->setSize(0.2);
-    testCube3->isLit(true);
-    _objects.push_back(testCube3);
+    Cube* cube3 = new Cube(fetchShader("phongShader.vtx", "phongShader.frag"), c, _lightSrc);
+    cube3->set2DTexture("assets/metal.jpg");
+    cube3->setPosition(glm::vec3(0.8, 0.4, -0.3));
+    cube3->setSize(0.3);
+    cube3->setRotation(glm::vec3(0.0, -1.0, 0.0), 0.03);
+
+    _shapes.push_back(ground);
+    _shapes.push_back(cube1);
+    _shapes.push_back(cube2);
+    _shapes.push_back(cube3);
+}
+
+Scene::~Scene() {
+    delete _skybox;
+    delete _lightSrc;
+    for (auto it : _shapes)
+        delete it;
 }
 
 void Scene::draw() {
@@ -56,7 +64,7 @@ void Scene::draw() {
     // Render our objects
     _skybox->render();  // always 1st
     _lightSrc->render();
-    for (auto it : _objects)
+    for (auto it : _shapes)
         it->render();
 
     // Check for problems
@@ -65,6 +73,15 @@ void Scene::draw() {
 
     // Flush the buffers
     glFlush();
+}
+
+void Scene::toggleLight() {
+    _isLit = !_isLit;
+    if (_isLit) _lightSrc->setColor(glm::vec3(1.0, 1.0, 1.0));
+    else        _lightSrc->setColor(glm::vec3(0.5, 0.5, 0.5));
+
+    for (auto it : _shapes)
+        it->isLit(_isLit);
 }
 
 void Scene::printErr(GLenum err) {
@@ -94,15 +111,5 @@ void Scene::printErr(GLenum err) {
         default:
             std::cerr << "Unknown error: " << err << std::endl;
             break;
-    }
-}
-
-void Scene::cleanUp() {
-    _skybox->cleanUp();
-    delete _skybox;
-
-    for (auto it : _objects) {
-        it->cleanUp();
-        delete it;
     }
 }

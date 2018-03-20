@@ -30,7 +30,7 @@ void main() {
         /* Configurable parameters */
         float ambientStr = 0.4;
         float diffStr = 1.0;
-        float specularStrength = 0.8;
+        float specularStrength = 1.2;
         float specularShine = 32;   // Higher -> reflection is more "dense" (not diffused)
 
         /* 1) Ambient lighting */

@@ -11,12 +11,14 @@ LightSource::LightSource(GLuint s, Camera* c, glm::vec3 lightPos, glm::vec3 ligh
     _position = lightPos;
     _color = lightCol;
 
+    _changed = false;
+
     float sz = 0.05f;
     float ns = -1 * sz;
 
     // Vertex data simply represents a small cube centered at the light position
     GLfloat points[] = {
-            // Position                                                     // Color
+            // Position                                           // Color
             sz + lightPos.x,  sz + lightPos.y, sz + lightPos.z,  lightCol.x, lightCol.y, lightCol.z,
             sz + lightPos.x,  sz + lightPos.y, ns + lightPos.z,  lightCol.x, lightCol.y, lightCol.z,
             sz + lightPos.x,  ns + lightPos.y, sz + lightPos.z,  lightCol.x, lightCol.y, lightCol.z,
@@ -26,7 +28,8 @@ LightSource::LightSource(GLuint s, Camera* c, glm::vec3 lightPos, glm::vec3 ligh
             ns + lightPos.x,  ns + lightPos.y, sz + lightPos.z,  lightCol.x, lightCol.y, lightCol.z,
             ns + lightPos.x,  ns + lightPos.y, ns + lightPos.z,  lightCol.x, lightCol.y, lightCol.z
     };
-    _vbo = storeToVBO(points, sizeof(points));
+    _bufferIDs.push_back( storeToVBO(points, sizeof(points)) );
+
     GLuint indices[] = {
             5, 7, 3,
             3, 1, 5,
@@ -46,7 +49,7 @@ LightSource::LightSource(GLuint s, Camera* c, glm::vec3 lightPos, glm::vec3 ligh
             7, 6, 3,
             3, 6, 2
     };
-    _ebo = storeToEBO(indices, sizeof(indices));
+    _bufferIDs.push_back( storeToEBO(indices, sizeof(indices)) );
 
     glUseProgram(_shaderProgram);
     GLint posAttrib = glGetAttribLocation(_shaderProgram, "vPosition");
@@ -62,6 +65,26 @@ void LightSource::render() {
     glBindVertexArray(_vao);
     glUseProgram(_shaderProgram);
 
+    if (_changed) {
+        // Update the vertex data
+        float sz = 0.05f;
+        float ns = -1 * sz;
+        GLfloat points[] = {
+                sz + _position.x,  sz + _position.y, sz + _position.z,  _color.x, _color.y, _color.z,
+                sz + _position.x,  sz + _position.y, ns + _position.z,  _color.x, _color.y, _color.z,
+                sz + _position.x,  ns + _position.y, sz + _position.z,  _color.x, _color.y, _color.z,
+                sz + _position.x,  ns + _position.y, ns + _position.z,  _color.x, _color.y, _color.z,
+                ns + _position.x,  sz + _position.y, sz + _position.z,  _color.x, _color.y, _color.z,
+                ns + _position.x,  sz + _position.y, ns + _position.z,  _color.x, _color.y, _color.z,
+                ns + _position.x,  ns + _position.y, sz + _position.z,  _color.x, _color.y, _color.z,
+                ns + _position.x,  ns + _position.y, ns + _position.z,  _color.x, _color.y, _color.z
+        };
+        glBindBuffer(GL_ARRAY_BUFFER, _bufferIDs[0]);
+        glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(points), points);
+
+        _changed = false;
+    }
+
     mat4 MVP = _c->ProjMatrix() * _c->ViewMatrix() * mat4(1.0f);
     GLint uniTransform = glGetUniformLocation(_shaderProgram, "MVP");
     glUniformMatrix4fv(uniTransform, 1, GL_FALSE, value_ptr(MVP));
@@ -69,11 +92,12 @@ void LightSource::render() {
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
 };
 
-void LightSource::cleanUp() {
-    glDeleteVertexArrays(1, &_vao);
-    glDeleteBuffers(1, &_vbo);
-    glDeleteBuffers(1, &_ebo);
-    _vao = 0;
-    _vbo = 0;
-    _ebo = 0;
+void LightSource::setPosition(glm::vec3 p) {
+    _position = p;
+    _changed = true;
+};
+
+void LightSource::setColor(glm::vec3 c) {
+    _color = c;
+    _changed = true;
 };

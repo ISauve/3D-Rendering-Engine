@@ -5,7 +5,7 @@
 using namespace std;
 
 GLFWwindow* initWindow();
-bool handleInput (Camera& c, GLFWwindow* window);
+bool handleInput (Camera& c, Scene& sc, GLFWwindow* window);
 
 int main(int argc, char** argv) {
     // Initialize GLFW & the window context
@@ -48,7 +48,7 @@ int main(int argc, char** argv) {
 
         // Fetch events
         glfwPollEvents();
-        bool quit = handleInput(c, window);
+        bool quit = handleInput(c, scene, window);
         if (quit) {
             glfwDestroyWindow(window);
             break;
@@ -60,7 +60,6 @@ int main(int argc, char** argv) {
         c.Tick();
     }
 
-    scene.cleanUp();
     glfwTerminate();
     return  0;
 }
@@ -80,12 +79,11 @@ GLFWwindow* initWindow() {
     return window;
 }
 
-
 // Check which keys were pushed & update camera accordingly
-bool handleInput (Camera& c, GLFWwindow* window) {
+int L_PREVIOUS = GLFW_RELEASE;
+bool handleInput (Camera& c, Scene& sc, GLFWwindow* window) {
     double xpos, ypos;
     glfwGetCursorPos(window, &xpos, &ypos);
-    // Check if cursor is in the screen
     c.Look(xpos, ypos);
 
     if (glfwGetKey(window, GLFW_KEY_ESCAPE)) return true;
@@ -97,6 +95,13 @@ bool handleInput (Camera& c, GLFWwindow* window) {
 
     if (glfwGetKey(window, GLFW_KEY_SPACE)) c.Jump();
     c.isDucking(glfwGetKey(window, GLFW_KEY_DOWN));
+
+    // For toggling the light, we only care about when the L key is released
+    int L_CURR = glfwGetKey(window, GLFW_KEY_L);
+    if (L_CURR == GLFW_RELEASE && L_PREVIOUS == GLFW_PRESS)
+        sc.toggleLight();
+    L_PREVIOUS = L_CURR;
+
     return false;
 }
 

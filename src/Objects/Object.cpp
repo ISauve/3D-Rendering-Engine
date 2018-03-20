@@ -1,7 +1,19 @@
 #include "Object.h"
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "stb_image.h"
+#include "../stb_image.h"
+
+Object::~Object() {
+    glDeleteVertexArrays(1, &_vao);
+
+    for (auto it : _bufferIDs)
+        glDeleteBuffers(1, &it);
+
+    for (auto it : _textureIDs)
+        glDeleteTextures(1, &it);
+
+    glDeleteProgram(_shaderProgram);
+};
 
 // Create & bind a vertex array object
 GLuint Object::initializeVAO() {
@@ -133,3 +145,4 @@ GLuint Object::storeCubeMap(std::vector<std::string>& faces) {
 
     return tex;
 }
+

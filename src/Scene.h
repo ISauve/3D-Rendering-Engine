@@ -1,24 +1,25 @@
 #ifndef OPENGL_SCENE_H
 #define OPENGL_SCENE_H
 
-#include "Object.h"
+#include "Objects/Object.h"
 
 #include <vector>
 
 class Scene {
-    std::vector<Object*> _objects;
+    std::vector<Shape*> _shapes;
     SkyBox* _skybox;
     LightSource* _lightSrc;
 
-    static int _texID;
+    bool _isLit;
 
     void printErr(GLenum);
 
 public:
     Scene(Camera* c);
+    ~Scene();
 
     void draw();
-    void cleanUp();
+    void toggleLight();
 };
 
 

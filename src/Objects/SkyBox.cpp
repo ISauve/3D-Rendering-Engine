@@ -20,7 +20,7 @@ SkyBox::SkyBox(GLuint s, Camera* c) : Object(s, c){
             -1.0f,  -1.0f, 1.0f,
             -1.0f,  -1.0f, -1.0f
     };
-    _vbo = storeToVBO(points, sizeof(points));
+    _bufferIDs.push_back( storeToVBO(points, sizeof(points)) );
 
     GLuint indices[] = {
             5, 7, 3,
@@ -41,7 +41,7 @@ SkyBox::SkyBox(GLuint s, Camera* c) : Object(s, c){
             7, 6, 3,
             3, 6, 2
     };
-    _ebo = storeToEBO(indices, sizeof(indices));
+    _bufferIDs.push_back( storeToEBO(indices, sizeof(indices)) );
 
     // Load the cubemap textures
     std::vector<std::string> faces {
@@ -52,7 +52,7 @@ SkyBox::SkyBox(GLuint s, Camera* c) : Object(s, c){
             "assets/skybox/front.jpg",
             "assets/skybox/back.jpg"
     };
-    _cubeTex = storeCubeMap(faces);
+    _textureIDs.push_back( storeCubeMap(faces) );
 
     // Tell OpenGL where to find/how to interpret the vertex data
     glUseProgram(_shaderProgram);
@@ -86,16 +86,4 @@ void SkyBox::render() {
 
     // Reset the depth test
     glDepthMask(GL_TRUE);
-}
-
-
-void SkyBox::cleanUp() {
-    glDeleteVertexArrays(1, &_vao);
-    glDeleteBuffers(1, &_vbo);
-    glDeleteBuffers(1, &_ebo);
-    glDeleteTextures(1, &_cubeTex);
-    _vao = 0;
-    _vbo = 0;
-    _ebo = 0;
-    _cubeTex = 0;
 }
