@@ -112,7 +112,8 @@ void Cube::set2DTexture(std::string path) {
     glBindVertexArray(_vao);
     glUseProgram(_shaderProgram);
 
-    _textureIDs.push_back( storeTex(path, GL_CLAMP_TO_BORDER) );    // increments textureCounter
+    _texture = storeTex(path, GL_CLAMP_TO_BORDER);
+    _textureIDs.push_back( _texture );
 
     GLfloat texCoords[] = {
             0.0f, 0.0f,     0.0f, 1.0f,    1.0f, 0.0f,       0.0f, 1.0f,     1.0f, 0.0f,    1.0f, 1.0f,
@@ -132,6 +133,6 @@ void Cube::set2DTexture(std::string path) {
     glUniform1i(uniTextureObj, 1);
 
     GLint uniSampleTex = glGetUniformLocation(_shaderProgram, "sampleTexture");
-    glUniform1i(uniSampleTex, textureCounter-1);
+    glUniform1i(uniSampleTex, 1);   // only binding 1 texture
 };
 

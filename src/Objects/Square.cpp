@@ -12,7 +12,13 @@ Square::Square(GLuint s, Camera* c, LightSource* l) : Shape(s, c, l) {
             -5.0f, -0.5f, -5.0f,  // Back left
             -5.0f, -0.5f,  5.0f,  // Front left
     };
-    _bufferIDs.push_back( storeToVBO(positions, sizeof(positions)) );
+    GLfloat normals[] = {
+            0.0f, 1.0f,  0.0f,
+            0.0f, 1.0f,  0.0f,
+            0.0f, 1.0f,  0.0f,
+            0.0f, 1.0f,  0.0f,
+    };
+    _bufferIDs.push_back( storeToVBO(positions, sizeof(positions), normals, sizeof(normals)) );
 
     GLuint indices[] = {
             0, 1, 3,
@@ -25,6 +31,10 @@ Square::Square(GLuint s, Camera* c, LightSource* l) : Shape(s, c, l) {
     GLint posAttrib = glGetAttribLocation(_shaderProgram, "vPosition");
     glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(posAttrib);
+
+    GLint normAttrib = glGetAttribLocation(_shaderProgram, "vNormal");
+    glVertexAttribPointer(normAttrib, 3, GL_FLOAT, GL_FALSE, 0, (void*)(sizeof(positions)));
+    glEnableVertexAttribArray(normAttrib);
 }
 
 void Square::set2DTexture(std::string path) {
@@ -37,7 +47,8 @@ void Square::set2DTexture(std::string path) {
     };
     _bufferIDs.push_back( storeToVBO(textcoords, sizeof(textcoords)) );
 
-    _textureIDs.push_back( storeTex(path, GL_REPEAT) ); // increments the global texture counter
+    _texture = storeTex(path, GL_REPEAT);
+    _textureIDs.push_back( _texture );
 
     GLint colAttrib = glGetAttribLocation(_shaderProgram, "vTexture");
     glVertexAttribPointer(colAttrib, 2, GL_FLOAT, GL_FALSE, 0, 0);
@@ -47,5 +58,5 @@ void Square::set2DTexture(std::string path) {
     glUniform1i(uniTextureObj, 1);
 
     GLint uniTexSample = glGetUniformLocation(_shaderProgram, "sampleTexture");
-    glUniform1i(uniTexSample, textureCounter-1);
+    glUniform1i(uniTexSample, 1);   // only y
 }

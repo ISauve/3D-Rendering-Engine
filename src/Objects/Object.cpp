@@ -1,7 +1,7 @@
 #include "Object.h"
 
 #define STB_IMAGE_IMPLEMENTATION
-#include "../stb_image.h"
+#include "../../lib/stb_image.h"
 
 Object::~Object() {
     glDeleteVertexArrays(1, &_vao);
@@ -12,7 +12,7 @@ Object::~Object() {
     for (auto it : _textureIDs)
         glDeleteTextures(1, &it);
 
-    glDeleteProgram(_shaderProgram);
+    //glDeleteProgram(_shaderProgram);  several meshes uses the same program...
 };
 
 // Create & bind a vertex array object
@@ -25,6 +25,14 @@ GLuint Object::initializeVAO() {
 
 // Create, bind, and load data into a vertex buffer object
 GLuint Object::storeToVBO(GLfloat* vertices, int size) {
+    GLuint vbo;
+    glGenBuffers(1, &vbo);
+    glBindBuffer(GL_ARRAY_BUFFER, vbo);
+    glBufferData(GL_ARRAY_BUFFER, size, vertices, GL_STATIC_DRAW);
+    return vbo;
+}
+
+GLuint Mesh::storeToVBO(Mesh::Vertex* vertices, long size) {
     GLuint vbo;
     glGenBuffers(1, &vbo);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
@@ -80,30 +88,39 @@ GLuint Object::storeToEBO(GLuint* indices, int size) {
     return ebo;
 }
 
+// Texture cache
+std::unordered_map<std::string, GLuint> textureCache;
+
 // Create, bind, and load data into a 2D texture object
-int textureCounter = 0; // initialize the global counter
 GLuint Object::storeTex(std::string path, GLenum wrapping) {
+
+    // Check if this particular texture has already been loaded & return its ID if so
+    if (textureCache[path]) {
+        if (DEBUG) std::cout << "Skipping loading of " << path << ": returning cached version" << std::endl;
+        return textureCache[path];
+    }
+
     GLuint tex;
     glGenTextures(1, &tex);
-    glActiveTexture(GL_TEXTURE0 + textureCounter);
-    textureCounter++;
-
     glBindTexture(GL_TEXTURE_2D, tex);
+    textureCache[path] = tex;
 
     int width, height, nrChannels;
     unsigned char* data = stbi_load(path.c_str(), &width, &height, &nrChannels, 0);
     if (data)  {
-        glTexImage2D(GL_TEXTURE_2D,
-                     0, GL_RGB, width, height, 0, GL_RGB, GL_UNSIGNED_BYTE, data);
+        GLenum format = GL_RGB;
+        if (nrChannels == 1)        format = GL_RED;
+        else if (nrChannels == 4)   format = GL_RGBA;
+
+        glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
-
-        stbi_image_free(data);
+        if (DEBUG) std::cout << path << " loaded" << std::endl;
     } else {
-        std::cerr << path << " failed to load." << std::endl;
-        stbi_image_free(data);
+        std::cerr << path << " failed to load" << std::endl;
     }
+    stbi_image_free(data);
 
-    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+    glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, wrapping);
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, wrapping);

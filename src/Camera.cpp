@@ -9,6 +9,7 @@ Camera::Camera(double xpos, double ypos) {
     _up = vec3(0.0f, 1.0f, 0.0f);
     _yaw = -90.0f;
     _pitch = 0.0f;
+    _zoom = 45.0f;
     _height = 0.0f;
     _jumpTime = -1.0f;
     _mouseSensitivity = 0.15f;
@@ -21,14 +22,38 @@ mat4 Camera::ViewMatrix() {
 }
 
 mat4 Camera::ProjMatrix() {
-    return perspective(radians(45.0f),   // vertical FOV
-                       600.0f / 600.0f,  // aspect ratio
-                       0.1f,             // "near" clipping plane
-                       100.0f);          // "far" clipping plane
+    float aspectRatio = SCREEN_W / SCREEN_H;
+    return perspective(radians(_zoom),
+                       aspectRatio,
+                       0.1f,            // "near" clipping plane
+                       100.0f);         // "far" clipping plane
 }
 
 vec3 Camera::Position() {
     return _position;
+}
+
+void Camera::Look(double xpos, double ypos) {
+    GLfloat xoffset = xpos - _xpos; // x coords increase from left to right
+    GLfloat yoffset = _ypos - ypos; // y coords increase from top to bottom
+    _xpos = xpos;
+    _ypos = ypos;
+
+    xoffset *= _mouseSensitivity;
+    yoffset *= _mouseSensitivity;
+
+    _yaw   += xoffset;
+    _pitch += yoffset;
+
+    // Limit the pitch so we don't flip "backwards"
+    if (_pitch > 89.0f) _pitch = 89.0f;
+    if (_pitch < -89.0f) _pitch = -89.0f;
+
+    // Update the direction we are facing
+    _facing.x = cos(radians(_yaw)) * cos(radians(_pitch));
+    _facing.y = sin(radians(_pitch));
+    _facing.z = sin(radians(_yaw)) * cos(radians(_pitch));
+    _facing = normalize(_facing);
 }
 
 void Camera::Move(Direction d) {
@@ -51,6 +76,12 @@ void Camera::Move(Direction d) {
     }
 
     _position.y = _height;
+}
+
+void Camera::Zoom(float yoffset) {
+    _zoom -= yoffset;
+    if (_zoom < 1.0f) _zoom = 1.0f;
+    if (_zoom > 45.0f) _zoom = 45.0f;
 }
 
 void Camera::isDucking(bool b) {
@@ -77,29 +108,4 @@ void Camera::Tick() {
         _position.y = _height;
         _jumpTime = -1;
     }
-}
-
-
-
-void Camera::Look(double xpos, double ypos) {
-    GLfloat xoffset = xpos - _xpos; // x coords increase from left to right
-    GLfloat yoffset = _ypos - ypos; // y coords increase from top to bottom
-    _xpos = xpos;
-    _ypos = ypos;
-
-    xoffset *= _mouseSensitivity;
-    yoffset *= _mouseSensitivity;
-
-    _yaw   += xoffset;
-    _pitch += yoffset;
-
-    // Limit the pitch so we don't flip "backwards"
-    if (_pitch > 89.0f) _pitch = 89.0f;
-    if (_pitch < -89.0f) _pitch = -89.0f;
-
-    // Update the direction we are facing
-    _facing.x = cos(radians(_yaw)) * cos(radians(_pitch));
-    _facing.y = sin(radians(_pitch));
-    _facing.z = sin(radians(_yaw)) * cos(radians(_pitch));
-    _facing = normalize(_facing);
 }

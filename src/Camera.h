@@ -6,6 +6,9 @@
 
 #include <iostream>
 
+const float SCREEN_H = 600.0f;
+const float SCREEN_W = 600.0f;
+
 enum Direction {FORWARD, BACKWARD, LEFT, RIGHT};
 
 class Camera {
@@ -13,6 +16,8 @@ class Camera {
     glm::vec3 _position;   // Camera position
     glm::vec3 _facing;     // Direction camera is facing (default = -Z)
     glm::vec3 _up;         // World "up" direction (Y axis)
+
+    float _zoom;
 
     GLfloat _height;
     GLfloat _jumpTime;
@@ -29,20 +34,22 @@ class Camera {
 public:
     Camera(double, double);
 
+    // Accessors
     glm::mat4 ViewMatrix();
     glm::mat4 ProjMatrix();
     glm::vec3 Position();
 
+    // Modifiers
+    void Look(double, double);
     void Move(Direction);
-    void Look(double xoffset, double yoffset);
+    void Zoom(float);
 
+    // Temporary actions
     void isDucking(bool);
     void Jump();
-    void Tick();
 
-    void getID() {
-        std::cout << "Camera " << this << std::endl;
-    }
+    // Timer update
+    void Tick();
 };
 
 #endif

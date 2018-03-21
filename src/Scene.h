@@ -6,9 +6,10 @@
 #include <vector>
 
 class Scene {
-    std::vector<Shape*> _shapes;
     SkyBox* _skybox;
     LightSource* _lightSrc;
+    std::vector<Shape*> _shapes;
+    std::vector<Model*> _models;
 
     bool _isLit;
 

@@ -55,6 +55,8 @@ void main() {
         vec3 specular = specularStrength * specImpact * lightColor;
 
         lighting = vec4(ambient + diffuse + specular, 1.0);
+    } else {
+        outColor = vec4(1.0, 0.0, 0.0, 1.0);
     }
 
     if (textureObject) {

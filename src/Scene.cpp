@@ -3,8 +3,8 @@
 
 using namespace std;
 
-Scene::Scene(Camera* c) {
-    _isLit = true;
+Scene::Scene(Camera* c) : _isLit(true) {
+    auto timer = chrono::high_resolution_clock::now();
 
     // Create the skybox
     _skybox = new SkyBox(fetchShader("cubemap.vtx", "cubemap.frag"), c);
@@ -39,6 +39,23 @@ Scene::Scene(Camera* c) {
     _shapes.push_back(cube1);
     _shapes.push_back(cube2);
     _shapes.push_back(cube3);
+
+    // Load models
+    Model* nanosuit = new Model("assets/nanosuit/nanosuit.obj", c, fetchShader("model.vtx", "model.frag"));
+    nanosuit->setPosition(glm::vec3(0.0, -0.5, 2.0));
+    nanosuit->setSize(0.06f);
+    nanosuit->setBlend(false);
+
+    Model* tree = new Model("assets/Tree/Tree.obj", c, fetchShader("model.vtx", "model.frag"));
+    tree->setPosition(glm::vec3(0.5, -0.5, 2.0));
+
+    _models.push_back(nanosuit);
+    _models.push_back(tree);
+
+    if (DEBUG) {
+        std::chrono::duration<double> loadingTime = chrono::high_resolution_clock::now() - timer;
+        std::cout << "Loaded scene data in " << loadingTime.count() << "s" << std::endl;
+    }
 }
 
 Scene::~Scene() {
@@ -46,9 +63,14 @@ Scene::~Scene() {
     delete _lightSrc;
     for (auto it : _shapes)
         delete it;
+    for (auto it : _models)
+        delete it;
 }
 
+int ticker = 0;
 void Scene::draw() {
+    auto timer = chrono::high_resolution_clock::now();
+
     // Enable blending to create transparency effect
     glEnable(GL_BLEND);
     glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
@@ -62,9 +84,11 @@ void Scene::draw() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Render our objects
-    _skybox->render();  // always 1st
+    _skybox->render();  // must always be 1st
     _lightSrc->render();
     for (auto it : _shapes)
+        it->render();
+    for (auto it : _models)
         it->render();
 
     // Check for problems
@@ -73,12 +97,22 @@ void Scene::draw() {
 
     // Flush the buffers
     glFlush();
+
+    ticker++;
+    if (DEBUG && ticker == 200) {   // periodically check how long the scene takes to draw
+        ticker = 0;
+        std::chrono::duration<double> drawingTime = chrono::high_resolution_clock::now() - timer;
+        std::cout << "Time to draw scene: " << drawingTime.count() << "s" << std::endl;
+    }
 }
 
 void Scene::toggleLight() {
     _isLit = !_isLit;
     if (_isLit) _lightSrc->setColor(glm::vec3(1.0, 1.0, 1.0));
-    else        _lightSrc->setColor(glm::vec3(0.5, 0.5, 0.5));
+    else _lightSrc->setColor(glm::vec3(0.5, 0.5, 0.5));
+
+    auto state = (_isLit) ? "on" : "off";
+    if (DEBUG) std::cout << "Lighting turned " << state << std::endl;
 
     for (auto it : _shapes)
         it->isLit(_isLit);

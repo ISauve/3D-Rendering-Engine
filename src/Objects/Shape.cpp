@@ -19,6 +19,7 @@ Shape::Shape(GLuint s, Camera* c, LightSource* l) : Object(s,c) {
     _rotationAxis = vec3(0.0);
     _rotationSpeed = 0.0f;
 
+    _texture = 0;
     // _numElements, _usesIndices set by the child class constructors
 }
 
@@ -26,6 +27,7 @@ void Shape::render() {
     // Bind the shapes's data
     glBindVertexArray(_vao);
     glUseProgram(_shaderProgram);
+    glBindTexture(GL_TEXTURE_2D, _texture); // necessary if we're drawing a texture - otherwise, noop
 
     // Define our rotation as a factor of time
     auto now = std::chrono::high_resolution_clock::now();
