@@ -22,6 +22,5 @@ void main() {
     TexCoords2D = vTexture;
     TexCoords3D = vTexture3D;
     Normal = vec3(mat3(transpose(inverse(Model))) * vNormal); // this is necessary if you do non-uniform scaling
-    //Normal = vNormal;
     WorldCoords = vec3(Model * vec4(vPosition, 1.0));
 }

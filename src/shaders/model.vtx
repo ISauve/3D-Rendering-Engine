@@ -4,14 +4,17 @@ layout (location = 0) in vec3 vPosition;
 layout (location = 1) in vec3 vNormal;
 layout (location = 2) in vec2 vTexture;
 
+uniform mat4 Model;
 uniform mat4 MVP;
 
 out vec3 Normal;
 out vec2 TexCoords2D;
+out vec3 WorldCoords;
 
 void main() {
     gl_Position = MVP * vec4(vPosition, 1.0);
 
-    Normal = vNormal;
+    Normal = vec3(mat3(transpose(inverse(Model))) * vNormal);
     TexCoords2D = vTexture;
+    WorldCoords = vec3(Model * vec4(vPosition, 1.0));
 }

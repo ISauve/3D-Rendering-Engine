@@ -1,8 +1,7 @@
 #include "Object.h"
 #include "../Shaders.h"
 
-Model::Model(std::string path, Camera* c, GLuint shader) {
-
+Model::Model(std::string path, Camera* c, GLuint shader, LightSource* l) {
 
     // Load the model into an assimp scene object
     Assimp::Importer importer;
@@ -24,20 +23,20 @@ Model::Model(std::string path, Camera* c, GLuint shader) {
     _pathRoot = path.substr(0, path.find_last_of('/'));
 
     // Recursively processes the nodes & saves the generated meshes in the _meshes vector
-    processNode(scene->mRootNode, scene, c, shader);
+    processNode(scene->mRootNode, scene, c, shader, l);
     if (DEBUG) std::cout << "Succesfully loaded data for model: " << _pathRoot << std::endl;
 }
 
-void Model::processNode(aiNode* node, const aiScene* scene, Camera* c, GLuint s) {
+void Model::processNode(aiNode* node, const aiScene* scene, Camera* c, GLuint s, LightSource* l) {
     // Process all the meshes
     for (int i=0; i < node->mNumMeshes; i++) {
         aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        _meshes.push_back(processMesh(mesh, scene, c, s));
+        _meshes.push_back(processMesh(mesh, scene, c, s, l));
     }
 
     // Recurse on the node's children
     for (int i=0; i < node->mNumChildren; i++)
-        processNode(node->mChildren[i], scene, c, s);
+        processNode(node->mChildren[i], scene, c, s, l);
 }
 
 // List of texture types: http://assimp.sourceforge.net/lib_html/material_8h.html#a7dd415ff703a2cc53d1c22ddbbd7dde0
@@ -58,8 +57,8 @@ std::vector<Mesh::Texture> Model::getTextures(aiMaterial* mat, aiTextureType typ
     return textures;
 }
 
-Mesh* Model::processMesh(aiMesh* mesh, const aiScene* scene, Camera* c, GLuint s) {
-    Mesh* newMesh = new Mesh(s, c);
+Mesh* Model::processMesh(aiMesh* mesh, const aiScene* scene, Camera* c, GLuint s, LightSource* l) {
+    Mesh* newMesh = new Mesh(s, c, l);
 
     std::vector<Mesh::Vertex> vertices;
     std::vector<unsigned int> indices;
@@ -120,9 +119,9 @@ void Model::render() {
         it->render();
 }
 
-void Model::setBlend(bool b) {
-    for (auto it : _meshes)
-        it->setBlend(b);
+void Model::isLit(bool b) {
+    for (auto it: _meshes)
+        it->isLit(b);
 }
 
 void Model::setPosition(glm::vec3 p) {
@@ -134,3 +133,13 @@ void Model::setSize(float s) {
     for (auto it : _meshes)
         it->setSize(s);
 };
+
+void Model::setRotation(glm::vec3 direction, float speed) {
+    for (auto it : _meshes)
+        it->setRotation(direction, speed);
+}
+
+void Model::setBlend(bool b) {
+    for (auto it : _meshes)
+        it->setBlend(b);
+}

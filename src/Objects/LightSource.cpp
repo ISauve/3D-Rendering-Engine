@@ -5,28 +5,27 @@
 
 using namespace glm;
 
-LightSource::LightSource(GLuint s, Camera* c, glm::vec3 lightPos, glm::vec3 lightCol) : Object(s, c) {
-    _vao = initializeVAO();
+LightSource::LightSource(GLuint s, Camera* c, glm::vec3 lightPos, glm::vec3 lightCol) : Object(s, c, nullptr) {
 
     _position = lightPos;
     _color = lightCol;
-
+    _onColor = lightCol;
     _changed = false;
 
-    float sz = 0.05f;
-    float ns = -1 * sz;
+    _size = 0.05f;  // default size
+    float nSize = -1 * _size;
 
     // Vertex data simply represents a small cube centered at the light position
     GLfloat points[] = {
             // Position                                           // Color
-            sz + lightPos.x,  sz + lightPos.y, sz + lightPos.z,  lightCol.x, lightCol.y, lightCol.z,
-            sz + lightPos.x,  sz + lightPos.y, ns + lightPos.z,  lightCol.x, lightCol.y, lightCol.z,
-            sz + lightPos.x,  ns + lightPos.y, sz + lightPos.z,  lightCol.x, lightCol.y, lightCol.z,
-            sz + lightPos.x,  ns + lightPos.y, ns + lightPos.z,  lightCol.x, lightCol.y, lightCol.z,
-            ns + lightPos.x,  sz + lightPos.y, sz + lightPos.z,  lightCol.x, lightCol.y, lightCol.z,
-            ns + lightPos.x,  sz + lightPos.y, ns + lightPos.z,  lightCol.x, lightCol.y, lightCol.z,
-            ns + lightPos.x,  ns + lightPos.y, sz + lightPos.z,  lightCol.x, lightCol.y, lightCol.z,
-            ns + lightPos.x,  ns + lightPos.y, ns + lightPos.z,  lightCol.x, lightCol.y, lightCol.z
+            _size + lightPos.x,  _size + lightPos.y, _size + lightPos.z,  lightCol.x, lightCol.y, lightCol.z,
+            _size + lightPos.x,  _size + lightPos.y, nSize + lightPos.z,  lightCol.x, lightCol.y, lightCol.z,
+            _size + lightPos.x,  nSize + lightPos.y, _size + lightPos.z,  lightCol.x, lightCol.y, lightCol.z,
+            _size + lightPos.x,  nSize + lightPos.y, nSize + lightPos.z,  lightCol.x, lightCol.y, lightCol.z,
+            nSize + lightPos.x,  _size + lightPos.y, _size + lightPos.z,  lightCol.x, lightCol.y, lightCol.z,
+            nSize + lightPos.x,  _size + lightPos.y, nSize + lightPos.z,  lightCol.x, lightCol.y, lightCol.z,
+            nSize + lightPos.x,  nSize + lightPos.y, _size + lightPos.z,  lightCol.x, lightCol.y, lightCol.z,
+            nSize + lightPos.x,  nSize + lightPos.y, nSize + lightPos.z,  lightCol.x, lightCol.y, lightCol.z
     };
     _bufferIDs.push_back( storeToVBO(points, sizeof(points)) );
 
@@ -67,17 +66,16 @@ void LightSource::render() {
 
     if (_changed) {
         // Update the vertex data
-        float sz = 0.05f;
-        float ns = -1 * sz;
+        float nSize = -1 * _size;
         GLfloat points[] = {
-                sz + _position.x,  sz + _position.y, sz + _position.z,  _color.x, _color.y, _color.z,
-                sz + _position.x,  sz + _position.y, ns + _position.z,  _color.x, _color.y, _color.z,
-                sz + _position.x,  ns + _position.y, sz + _position.z,  _color.x, _color.y, _color.z,
-                sz + _position.x,  ns + _position.y, ns + _position.z,  _color.x, _color.y, _color.z,
-                ns + _position.x,  sz + _position.y, sz + _position.z,  _color.x, _color.y, _color.z,
-                ns + _position.x,  sz + _position.y, ns + _position.z,  _color.x, _color.y, _color.z,
-                ns + _position.x,  ns + _position.y, sz + _position.z,  _color.x, _color.y, _color.z,
-                ns + _position.x,  ns + _position.y, ns + _position.z,  _color.x, _color.y, _color.z
+                _size + _position.x,  _size + _position.y, _size + _position.z,  _color.x, _color.y, _color.z,
+                _size + _position.x,  _size + _position.y, nSize + _position.z,  _color.x, _color.y, _color.z,
+                _size + _position.x,  nSize + _position.y, _size + _position.z,  _color.x, _color.y, _color.z,
+                _size + _position.x,  nSize + _position.y, nSize + _position.z,  _color.x, _color.y, _color.z,
+                nSize + _position.x,  _size + _position.y, _size + _position.z,  _color.x, _color.y, _color.z,
+                nSize + _position.x,  _size + _position.y, nSize + _position.z,  _color.x, _color.y, _color.z,
+                nSize + _position.x,  nSize + _position.y, _size + _position.z,  _color.x, _color.y, _color.z,
+                nSize + _position.x,  nSize + _position.y, nSize + _position.z,  _color.x, _color.y, _color.z
         };
         glBindBuffer(GL_ARRAY_BUFFER, _bufferIDs[0]);
         glBufferSubData(GL_ARRAY_BUFFER, 0, sizeof(points), points);
@@ -86,18 +84,21 @@ void LightSource::render() {
     }
 
     mat4 MVP = _c->ProjMatrix() * _c->ViewMatrix() * mat4(1.0f);
-    GLint uniTransform = glGetUniformLocation(_shaderProgram, "MVP");
-    glUniformMatrix4fv(uniTransform, 1, GL_FALSE, value_ptr(MVP));
+    GLint uniTranSizeform = glGetUniformLocation(_shaderProgram, "MVP");
+    glUniformMatrix4fv(uniTranSizeform, 1, GL_FALSE, value_ptr(MVP));
 
     glDrawElements(GL_TRIANGLES, 36, GL_UNSIGNED_INT, nullptr);
 };
 
-void LightSource::setPosition(glm::vec3 p) {
-    _position = p;
+void LightSource::setColor(glm::vec3 p) {
+    _color = p;
+    _onColor = p;
     _changed = true;
 };
 
-void LightSource::setColor(glm::vec3 c) {
-    _color = c;
+void LightSource::toggle() {
+    if (_color == _onColor) _color = glm::vec3(0.5, 0.5, 0.5);  // off = gray
+    else                    _color = _onColor;
+
     _changed = true;
 };

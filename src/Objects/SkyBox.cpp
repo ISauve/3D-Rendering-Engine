@@ -6,8 +6,7 @@
 using namespace glm;
 
 
-SkyBox::SkyBox(GLuint s, Camera* c) : Object(s, c){
-    _vao = initializeVAO();
+SkyBox::SkyBox(GLuint s, Camera* c) : Object(s, c, nullptr) {
 
     // Vertex data simply represents a large cube
     GLfloat points[] = {

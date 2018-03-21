@@ -3,6 +3,8 @@
 
 using namespace glm;
 
+const float HEIGHT = 0.8f;
+
 Camera::Camera(double xpos, double ypos) {
     _position = vec3(0.0f, 0.0f, 3.0f);
     _facing = vec3(0.0f, 0.0f, -1.0f);
@@ -10,7 +12,7 @@ Camera::Camera(double xpos, double ypos) {
     _yaw = -90.0f;
     _pitch = 0.0f;
     _zoom = 45.0f;
-    _height = 0.0f;
+    _height = HEIGHT;
     _jumpTime = -1.0f;
     _mouseSensitivity = 0.15f;
     _xpos = xpos;
@@ -57,7 +59,7 @@ void Camera::Look(double xpos, double ypos) {
 }
 
 void Camera::Move(Direction d) {
-    float dt = 0.01f;
+    float dt = 0.02f;
 
     switch(d) {
         case FORWARD:
@@ -85,8 +87,8 @@ void Camera::Zoom(float yoffset) {
 }
 
 void Camera::isDucking(bool b) {
-    if (b) _height = -0.15f;
-    else _height = 0.0f;
+    if (b) _height = HEIGHT - 0.25f;
+    else _height = HEIGHT;
     _position.y = _height;
 }
 
@@ -99,12 +101,12 @@ void Camera::Jump() {
 void Camera::Tick() {
     if (_jumpTime == -1) return;  // don't do anything if we're not jumping
 
-    _height = 3.0f * _jumpTime + 0.5f * -9.8f * _jumpTime * _jumpTime;
+    _height = HEIGHT + 3.0f * _jumpTime + 0.5f * -9.8f * _jumpTime * _jumpTime;
     _position.y = _height;
     _jumpTime += 0.016;
 
-    if (_height < 0) {
-        _height = 0.0f;
+    if (_height < HEIGHT) {
+        _height = HEIGHT;
         _position.y = _height;
         _jumpTime = -1;
     }

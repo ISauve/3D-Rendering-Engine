@@ -26,7 +26,7 @@ void main() {
     vec4 lighting = vec4(1.0);
 
     // Implement the Phong lighting model, if lighting details have been passed
-    if (lightPos != vec3(0.0) && lightColor != vec3(0.0)) {
+    if (lightColor != vec3(0.0)) {
         /* Configurable parameters */
         float ambientStr = 0.4;
         float diffStr = 1.0;
@@ -55,18 +55,16 @@ void main() {
         vec3 specular = specularStrength * specImpact * lightColor;
 
         lighting = vec4(ambient + diffuse + specular, 1.0);
-    } else {
-        outColor = vec4(1.0, 0.0, 0.0, 1.0);
     }
 
-    if (textureObject) {
-        outColor = texture(sampleTexture, TexCoords2D) * lighting;
-    } else if (cubeObject) {
+    vec4 result = vec4(0.0);
+    if (textureObject) result = texture(sampleTexture, TexCoords2D) * lighting;
+    else if (cubeObject) {
         // TODO there is a bug here (compiles but -> invalid op)
-        //outColor = texture(smpleCube, TexCoords3D);
-        //outColor = texture(sampleCube, TexCoords3D) * lighting;
-    } else {
-        // Default color is black (if vColor wasn't passed in)
-        outColor = vec4(Color, 1.0) * lighting;
+        //result = texture(smpleCube, TexCoords3D);
+        //result = texture(sampleCube, TexCoords3D) * lighting;
     }
+
+    // Note: default color is black (if vColor wasn't passed in & there is no texture)
+    outColor = result + vec4(Color, 1.0) * lighting;
 }

@@ -7,6 +7,8 @@
 using namespace glm;
 
 Cube::Cube(GLuint s, Camera* c, LightSource* l) : Shape(s, c, l) {
+    glUseProgram(_shaderProgram);
+
     _numElements = 36;
     _usesIndices = false;
 
@@ -57,8 +59,6 @@ Cube::Cube(GLuint s, Camera* c, LightSource* l) : Shape(s, c, l) {
     };
     _bufferIDs.push_back( storeToVBO(vertices, sizeof(vertices)) );
 
-    glUseProgram(_shaderProgram);
-
     GLint posAttrib = glGetAttribLocation(_shaderProgram, "vPosition");
     glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 6 * sizeof(float), 0);
     glEnableVertexAttribArray(posAttrib);
@@ -66,6 +66,8 @@ Cube::Cube(GLuint s, Camera* c, LightSource* l) : Shape(s, c, l) {
     GLint normAttrib = glGetAttribLocation(_shaderProgram, "vNormal");
     glVertexAttribPointer(normAttrib, 3, GL_FLOAT, GL_FALSE,  6 * sizeof(float), (void*)( 3 * sizeof(float) ));
     glEnableVertexAttribArray(normAttrib);
+
+    unbind();
 }
 
 void Cube::setColor(vec3 color) {
@@ -96,6 +98,8 @@ void Cube::setColor(vec3 color) {
     GLint colAttrib = glGetAttribLocation(_shaderProgram, "vColor");
     glVertexAttribPointer(colAttrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(colAttrib);
+
+    unbind();
 }
 
 void Cube::setColors(GLfloat* colors, int sizeC) {
@@ -106,6 +110,8 @@ void Cube::setColors(GLfloat* colors, int sizeC) {
     GLint colAttrib = glGetAttribLocation(_shaderProgram, "vColor");
     glVertexAttribPointer(colAttrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(colAttrib);
+
+    unbind();
 };
 
 void Cube::set2DTexture(std::string path) {
@@ -132,7 +138,11 @@ void Cube::set2DTexture(std::string path) {
     GLint uniTextureObj = glGetUniformLocation(_shaderProgram, "textureObject");
     glUniform1i(uniTextureObj, 1);
 
+    // We're only binding 1 texture, so set it to texture unit 0
+    glActiveTexture(GL_TEXTURE0);
     GLint uniSampleTex = glGetUniformLocation(_shaderProgram, "sampleTexture");
-    glUniform1i(uniSampleTex, 1);   // only binding 1 texture
+    glUniform1i(uniSampleTex, 0);
+
+    unbind();
 };
 

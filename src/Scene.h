@@ -13,6 +13,8 @@ class Scene {
 
     bool _isLit;
 
+    void loadShapes(Camera*);
+    void loadModels(Camera*);
     void printErr(GLenum);
 
 public:

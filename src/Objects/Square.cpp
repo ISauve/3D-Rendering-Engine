@@ -3,14 +3,16 @@
 using namespace glm;
 
 Square::Square(GLuint s, Camera* c, LightSource* l) : Shape(s, c, l) {
+    glUseProgram(_shaderProgram);
+
     _numElements = 6;
     _usesIndices = true;
 
     GLfloat positions[] = {
-            5.0f, -0.5f,  5.0f,   // Front right
-            5.0f, -0.5f, -5.0f,   // Back right
-            -5.0f, -0.5f, -5.0f,  // Back left
-            -5.0f, -0.5f,  5.0f,  // Front left
+            1.0f, 0.0f,  1.0f,   // Front right
+            1.0f, 0.0f, -1.0f,   // Back right
+            -1.0f, 0.0f, -1.0f,  // Back left
+            -1.0f, 0.0f,  1.0f,  // Front left
     };
     GLfloat normals[] = {
             0.0f, 1.0f,  0.0f,
@@ -26,8 +28,6 @@ Square::Square(GLuint s, Camera* c, LightSource* l) : Shape(s, c, l) {
     };
     _bufferIDs.push_back( storeToEBO(indices, sizeof(indices)) );
 
-    glUseProgram(_shaderProgram);
-
     GLint posAttrib = glGetAttribLocation(_shaderProgram, "vPosition");
     glVertexAttribPointer(posAttrib, 3, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(posAttrib);
@@ -35,9 +35,14 @@ Square::Square(GLuint s, Camera* c, LightSource* l) : Shape(s, c, l) {
     GLint normAttrib = glGetAttribLocation(_shaderProgram, "vNormal");
     glVertexAttribPointer(normAttrib, 3, GL_FLOAT, GL_FALSE, 0, (void*)(sizeof(positions)));
     glEnableVertexAttribArray(normAttrib);
+
+    unbind();
 }
 
 void Square::set2DTexture(std::string path) {
+    glBindVertexArray(_vao);
+    glUseProgram(_shaderProgram);
+
     // Note: the same indices defined for positional data will be used here
     GLfloat textcoords[] = {
             1.0f, 0.0f,
@@ -57,6 +62,9 @@ void Square::set2DTexture(std::string path) {
     GLint uniTextureObj = glGetUniformLocation(_shaderProgram, "textureObject");
     glUniform1i(uniTextureObj, 1);
 
+    glActiveTexture(GL_TEXTURE0);
     GLint uniTexSample = glGetUniformLocation(_shaderProgram, "sampleTexture");
-    glUniform1i(uniTexSample, 1);   // only y
+    glUniform1i(uniTexSample, 0);
+
+    unbind();
 }

@@ -14,22 +14,33 @@
 
 #include "../Camera.h"
 class Camera;
+class LightSource;
 
 static bool DEBUG = false;
 
 /*************************************************************
-                     Abstract Base Class
+                   Abstract Base Classes
  *************************************************************/
+
 class Object {
 protected:
     GLuint _shaderProgram;
     GLuint _vao;
 
+    Camera* _c;
+    LightSource* _lightSrc;
+
     // Buffer ID storage for clean-up purposes: individually references may also be kept
     std::vector <GLuint> _bufferIDs;
     std::vector <GLuint> _textureIDs;
 
-    Camera* _c;
+    // State information
+    std::chrono::time_point<std::chrono::high_resolution_clock> _start;
+    bool _lit;
+    glm::vec3 _position;
+    float _size;
+    glm::vec3 _rotationAxis;
+    float _rotationSpeed;
 
     // Helpers
     GLuint initializeVAO();
@@ -41,10 +52,16 @@ protected:
     GLuint storeCubeMap(std::vector<std::string>&);
 
 public:
-    Object(GLuint s, Camera* c) : _shaderProgram(s), _c(c) {};
+    Object(GLuint, Camera*, LightSource*);
     ~Object();
 
     virtual void render() {};
+
+    // Modifiers
+    void isLit(bool b) { _lit = b; };
+    void setPosition(glm::vec3 p) { _position = p; };
+    void setSize(float s) { _size = s; };
+    void setRotation(glm::vec3 axis, float speed = 0) { _rotationAxis = axis; _rotationSpeed = speed; };
 };
 
 /*************************************************************
@@ -58,9 +75,8 @@ public:
     void render() override;
 };
 
-
 class LightSource : public Object {
-    glm::vec3 _position;
+    glm::vec3 _onColor;
     glm::vec3 _color;
     bool _changed;
 
@@ -74,8 +90,8 @@ public:
     glm::vec3 Color() { return _color; };
 
     // Modifiers
-    void setPosition(glm::vec3);
     void setColor(glm::vec3);
+    void toggle();
 };
 
 
@@ -84,31 +100,17 @@ public:
  *************************************************************/
 
 class Shape : public Object {
-    std::chrono::time_point<std::chrono::high_resolution_clock> _start;
-
-    LightSource* _lightSrc;
-    bool _lit;
-
-    glm::vec3 _position;
-    float _size;
-    glm::vec3 _rotationAxis;
-    float _rotationSpeed;
-
 protected:
+    int _texture;
     int _numElements;
     bool _usesIndices;
-    int _texture;
+
+    void unbind();
 
 public:
     Shape(GLuint, Camera*, LightSource*);
 
     void render() override;
-
-    // Modifiers
-    void isLit(bool b) { _lit = b; };
-    void setPosition(glm::vec3 p) { _position = p; };
-    void setSize(float s) { _size = s; };
-    void setRotation(glm::vec3 axis, float speed) { _rotationAxis = axis; _rotationSpeed = speed; };
 };
 
 class Cube : public Shape {
@@ -125,7 +127,6 @@ public:
     Square(GLuint, Camera*, LightSource*);
 
     void set2DTexture(std::string);
-    // TODO add rotation, color, transparency, etc
 };
 
 // TODO pyramid
@@ -138,38 +139,32 @@ class Mesh : public Object {
 public:     // Forward declarations
     struct Vertex;
     struct Texture;
-private:
 
+private:
     std::vector<Vertex> _vertices;
     std::vector<unsigned int> _indices;
     std::vector<Texture> _textures;
 
-    glm::vec3 _position;
-    float _size;
-
-    // Some models dont have RGBA textures so blending messes with them
     bool _blend;
 
     // Overridden version for this class only (defn in Object.cpp)
     GLuint storeToVBO(Mesh::Vertex*, long);
+    void unbind();
 
 public:
-    Mesh(GLuint, Camera*);
-
-    void addData(std::vector<Vertex>, std::vector<unsigned int>, std::vector<Texture>);
+    Mesh(GLuint, Camera*, LightSource*);
 
     void render() override;
 
+    // Modifiers
+    void addData(std::vector<Vertex>, std::vector<unsigned int>, std::vector<Texture>);
     void setBlend(bool b) { _blend = b; };
-    void setPosition(glm::vec3 p) { _position = p; };
-    void setSize(float s) { _size = s; };
 
     struct Vertex {
         glm::vec3 position;
         glm::vec3 normal;
         glm::vec2 texCoords;
     };
-
     struct Texture {
         std::string name;
         std::string path;
@@ -182,17 +177,23 @@ class Model {
     std::vector<Mesh*> _meshes;
     std::string _pathRoot;
 
-    void processNode(aiNode*, const aiScene*, Camera*, GLuint);
-    Mesh* processMesh(aiMesh*, const aiScene*, Camera*, GLuint);
+    // Processing helpers
+    void processNode(aiNode*, const aiScene*, Camera*, GLuint, LightSource*);
+    Mesh* processMesh(aiMesh*, const aiScene*, Camera*, GLuint, LightSource*);
     std::vector<Mesh::Texture> getTextures(aiMaterial*, aiTextureType, std::string, std::string);
 
 public:
-    Model(std::string, Camera*, GLuint);
+    Model(std::string, Camera*, GLuint, LightSource*);
 
+    // Define common interface with objects
     void render();
-    void setBlend(bool b);
+    void isLit(bool b);
+    void setRotation(glm::vec3 axis, float speed = 0);
     void setPosition(glm::vec3);
     void setSize(float);
+
+    // Other modifiers
+    void setBlend(bool b);
 };
 
 #endif

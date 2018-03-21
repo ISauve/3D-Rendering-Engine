@@ -3,6 +3,12 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "../../lib/stb_image.h"
 
+Object::Object(GLuint s, Camera* c, LightSource* l) :_shaderProgram(s), _c(c), _lightSrc(l),
+    _lit(true), _position(glm::vec3(0.0)), _size(1.0f), _rotationAxis(glm::vec3(0.0)), _rotationSpeed(0.0f) {
+    _start = std::chrono::high_resolution_clock::now();
+    _vao = initializeVAO();
+};
+
 Object::~Object() {
     glDeleteVertexArrays(1, &_vao);
 
@@ -102,7 +108,6 @@ GLuint Object::storeTex(std::string path, GLenum wrapping) {
 
     GLuint tex;
     glGenTextures(1, &tex);
-    glBindTexture(GL_TEXTURE_2D, tex);
     textureCache[path] = tex;
 
     int width, height, nrChannels;
@@ -112,12 +117,13 @@ GLuint Object::storeTex(std::string path, GLenum wrapping) {
         if (nrChannels == 1)        format = GL_RED;
         else if (nrChannels == 4)   format = GL_RGBA;
 
+        glBindTexture(GL_TEXTURE_2D, tex);
         glTexImage2D(GL_TEXTURE_2D, 0, format, width, height, 0, format, GL_UNSIGNED_BYTE, data);
         glGenerateMipmap(GL_TEXTURE_2D);
         if (DEBUG) std::cout << path << " loaded" << std::endl;
-    } else {
-        std::cerr << path << " failed to load" << std::endl;
-    }
+
+    } else std::cerr << path << " failed to load" << std::endl;
+
     stbi_image_free(data);
 
     glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR_MIPMAP_LINEAR);
