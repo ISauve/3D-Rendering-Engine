@@ -3,21 +3,11 @@
 
 using namespace glm;
 
-const float HEIGHT = 0.8f;
-
-Camera::Camera(double xpos, double ypos) {
-    _position = vec3(0.0f, 0.0f, 3.0f);
-    _facing = vec3(0.0f, 0.0f, -1.0f);
-    _up = vec3(0.0f, 1.0f, 0.0f);
-    _yaw = -90.0f;
-    _pitch = 0.0f;
-    _zoom = 45.0f;
-    _height = HEIGHT;
-    _jumpTime = -1.0f;
-    _mouseSensitivity = 0.15f;
-    _xpos = xpos;
-    _ypos = ypos;
-}
+Camera::Camera(double xpos, double ypos) :
+        _position(vec3(0.0f, HEIGHT, 3.0f)),  _facing(vec3(0.0f, 0.0f, -1.0f)), _up(vec3(0.0f, 1.0f, 0.0f)),
+        _zoom(45.0f), _ducking(false), _height(HEIGHT), _jumpTime(-1.0f),
+        _yaw(-90.0f), _pitch(0.0f),
+        _xpos(xpos), _ypos(ypos), _mouseSensitivity(MOUSE_SENSITIVITY) {}
 
 mat4 Camera::ViewMatrix() {
     return lookAt(_position, _position + _facing, _up);
@@ -59,20 +49,18 @@ void Camera::Look(double xpos, double ypos) {
 }
 
 void Camera::Move(Direction d) {
-    float dt = 0.02f;
-
     switch(d) {
         case FORWARD:
-            _position += _facing * dt;
+            _position += _facing * MOVEMENT_SPEED;
             break;
         case BACKWARD:
-            _position -= _facing * dt;
+            _position -= _facing * MOVEMENT_SPEED;
             break;
         case LEFT:
-            _position -= normalize(cross(_facing, _up)) * dt;
+            _position -= normalize(cross(_facing, _up)) * MOVEMENT_SPEED;
             break;
         case RIGHT:
-            _position += normalize(cross(_facing, _up)) * dt;
+            _position += normalize(cross(_facing, _up)) * MOVEMENT_SPEED;
             break;
         default: break;
     }
@@ -90,6 +78,8 @@ void Camera::isDucking(bool b) {
     if (b) _height = HEIGHT - 0.25f;
     else _height = HEIGHT;
     _position.y = _height;
+
+    _ducking = b;
 }
 
 void Camera::Jump() {
@@ -105,8 +95,9 @@ void Camera::Tick() {
     _position.y = _height;
     _jumpTime += 0.016;
 
-    if (_height < HEIGHT) {
-        _height = HEIGHT;
+    if (_height < HEIGHT) {     // jump is finished
+        if (_ducking) _height = HEIGHT - 0.25f;
+        else _height = HEIGHT;
         _position.y = _height;
         _jumpTime = -1;
     }

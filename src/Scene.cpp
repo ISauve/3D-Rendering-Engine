@@ -3,7 +3,7 @@
 
 using namespace std;
 
-Scene::Scene(Camera* c) : _isLit(true) {
+Scene::Scene(Camera* c) : _c(c), _isLit(true) {
     auto timer = chrono::high_resolution_clock::now();
 
     // Create the skybox

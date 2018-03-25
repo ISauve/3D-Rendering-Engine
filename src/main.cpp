@@ -4,8 +4,12 @@
 
 using namespace std;
 
+// Forward declarations
 GLFWwindow* initWindow();
-bool handleInput (Camera& c, Scene& sc, GLFWwindow* window);
+static void cursorPositionCallback(GLFWwindow*, double, double);
+void scrollCallback(GLFWwindow*, double, double);
+void keyCallback(GLFWwindow*, int, int, int, int);
+void handleRepeatInput (Scene&, GLFWwindow*);
 
 int main(int argc, char** argv) {
     // Initialize GLFW & the window context
@@ -27,9 +31,6 @@ int main(int argc, char** argv) {
     // Define desired frame rate
     int FPS = 60;
 
-    // Capture the cursor
-    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
-
     // Initialize the camera with the initial cursor position
     double xpos, ypos;
     glfwGetCursorPos(window, &xpos, &ypos);
@@ -37,6 +38,17 @@ int main(int argc, char** argv) {
 
     // Initialize the scene with this camera
     Scene scene(&c);
+
+    // Pass the scene to GLFW so it can be accessed from the input callbacks
+    glfwSetWindowUserPointer(window, &scene);
+
+    // Attach callbacks
+    glfwSetCursorPosCallback(window, cursorPositionCallback);
+    glfwSetScrollCallback(window, scrollCallback);
+    glfwSetKeyCallback(window, keyCallback);
+
+    // Capture the cursor
+    glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
 
     // Enter the rendering loop
     while( !glfwWindowShouldClose(window) ) {
@@ -46,13 +58,9 @@ int main(int argc, char** argv) {
         scene.draw();
         glfwSwapBuffers(window);
 
-        // Fetch events
+        // Poll for events
         glfwPollEvents();
-        bool quit = handleInput(c, scene, window);
-        if (quit) {
-            glfwDestroyWindow(window);
-            break;
-        }
+        handleRepeatInput(scene, window);
 
         // Pause for an appropriate amount of time to achieve desired frame rate
         auto msPerFrame = int (1.0 / (FPS / 1000.0));
@@ -79,29 +87,44 @@ GLFWwindow* initWindow() {
     return window;
 }
 
-// Check which keys were pushed & update camera accordingly
-int L_PREVIOUS = GLFW_RELEASE;
-bool handleInput (Camera& c, Scene& sc, GLFWwindow* window) {
-    double xpos, ypos;
-    glfwGetCursorPos(window, &xpos, &ypos);
-    c.Look(xpos, ypos);
+// Mouse movement callback
+static void cursorPositionCallback(GLFWwindow* window, double xpos, double ypos) {
+    auto scene = reinterpret_cast<Scene*>(glfwGetWindowUserPointer(window));
+    scene->Look(xpos, ypos);
+}
 
-    if (glfwGetKey(window, GLFW_KEY_ESCAPE)) return true;
+void scrollCallback(GLFWwindow* window, double xoffset, double yoffset) {
+    auto scene = reinterpret_cast<Scene*>(glfwGetWindowUserPointer(window));
+    scene->Zoom(yoffset);
+}
 
-    if (glfwGetKey(window, GLFW_KEY_A)) c.Move(LEFT);
-    if (glfwGetKey(window, GLFW_KEY_D)) c.Move(RIGHT);
-    if (glfwGetKey(window, GLFW_KEY_W)) c.Move(FORWARD);
-    if (glfwGetKey(window, GLFW_KEY_S)) c.Move(BACKWARD);
+// Use callback to handle events that only occur once when a key is pressed
+void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods) {
+    auto scene = reinterpret_cast<Scene*>(glfwGetWindowUserPointer(window));
+    if (action == GLFW_PRESS) {
+        switch (key) {
+            case GLFW_KEY_ESCAPE:
+                glfwSetWindowShouldClose(window, GLFW_TRUE);
+                break;
+            case GLFW_KEY_L:
+                scene->toggleLight();
+                break;
+            case GLFW_KEY_DOWN:
+                scene->isDucking(true);
+                break;
+            case GLFW_KEY_SPACE:
+                scene->Jump();
+            default:break;
+        }
+    }
+    if (action == GLFW_RELEASE && key == GLFW_KEY_DOWN) scene->isDucking(false);
+}
 
-    if (glfwGetKey(window, GLFW_KEY_SPACE)) c.Jump();
-    c.isDucking(glfwGetKey(window, GLFW_KEY_DOWN));
-
-    // For toggling the light, we only care about when the L key is released
-    int L_CURR = glfwGetKey(window, GLFW_KEY_L);
-    if (L_CURR == GLFW_RELEASE && L_PREVIOUS == GLFW_PRESS)
-        sc.toggleLight();
-    L_PREVIOUS = L_CURR;
-
-    return false;
+// Use polling for events should continue to occur for as long as the key is being pressed
+void handleRepeatInput (Scene& sc, GLFWwindow* window) {
+    if (glfwGetKey(window, GLFW_KEY_A)) sc.Move(LEFT);
+    if (glfwGetKey(window, GLFW_KEY_D)) sc.Move(RIGHT);
+    if (glfwGetKey(window, GLFW_KEY_W)) sc.Move(FORWARD);
+    if (glfwGetKey(window, GLFW_KEY_S)) sc.Move(BACKWARD);
 }
 

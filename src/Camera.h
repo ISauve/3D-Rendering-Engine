@@ -3,11 +3,15 @@
 
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
-
 #include <iostream>
 
+/*********** Camera settings ***********/
 const float SCREEN_H = 600.0f;
 const float SCREEN_W = 600.0f;
+const float HEIGHT = 0.8f;
+const float MOUSE_SENSITIVITY = 0.15f;
+const float MOVEMENT_SPEED = 0.02f;
+/**************************************/
 
 enum Direction {FORWARD, BACKWARD, LEFT, RIGHT};
 
@@ -17,8 +21,9 @@ class Camera {
     glm::vec3 _facing;     // Direction camera is facing (default = -Z)
     glm::vec3 _up;         // World "up" direction (Y axis)
 
+    // Camera state
     float _zoom;
-
+    bool _ducking;
     GLfloat _height;
     GLfloat _jumpTime;
 
@@ -29,7 +34,7 @@ class Camera {
     // Mouse information
     double _xpos;
     double _ypos;
-    GLfloat _mouseSensitivity; // Sensitivity to movement (default = 0.25f)
+    GLfloat _mouseSensitivity;
 
 public:
     Camera(double, double);
