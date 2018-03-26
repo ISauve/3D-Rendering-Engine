@@ -3,7 +3,6 @@
 in vec3 vPosition;
 in vec3 vColor;
 in vec2 vTexture;
-in vec3 vTexture3D;
 in vec3 vNormal;
 
 uniform mat4 Model;
@@ -11,7 +10,6 @@ uniform mat4 MVP;
 
 out vec3 Color;
 out vec2 TexCoords2D;
-out vec3 TexCoords3D;
 out vec3 Normal;
 out vec3 WorldCoords;
 
@@ -20,7 +18,6 @@ void main() {
 
     Color = vColor;
     TexCoords2D = vTexture;
-    TexCoords3D = vTexture3D;
     Normal = vec3(mat3(transpose(inverse(Model))) * vNormal); // this is necessary if you do non-uniform scaling
     WorldCoords = vec3(Model * vec4(vPosition, 1.0));
 }

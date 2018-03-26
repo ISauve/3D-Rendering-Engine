@@ -46,22 +46,23 @@ protected:
     GLuint initializeVAO();
     GLuint storeToVBO(GLfloat*, int);
     GLuint storeToVBO(GLfloat*, int, GLfloat*, int);
-    GLuint storeToVBO(GLfloat*, int, GLfloat*, int, GLfloat*, int);
     GLuint storeToEBO(GLuint*, int);
     GLuint storeTex(std::string, GLenum = GL_REPEAT);
     GLuint storeCubeMap(std::vector<std::string>&);
 
 public:
     Object(GLuint, Camera*, LightSource*);
-    ~Object();
+    virtual ~Object();
 
     virtual void render() {};
 
     // Modifiers
-    void isLit(bool b) { _lit = b; };
-    void setPosition(glm::vec3 p) { _position = p; };
-    void setSize(float s) { _size = s; };
-    void setRotation(glm::vec3 axis, float speed = 0) { _rotationAxis = axis; _rotationSpeed = speed; };
+    virtual void isLit(bool b) { _lit = b; };
+    virtual void setPosition(glm::vec3 p) { _position = p; };
+    virtual void setSize(float s) { _size = s; };
+    virtual void setRotation(glm::vec3 axis) { _rotationAxis = axis; _rotationSpeed = 0; };
+    virtual void setRotation(glm::vec3 axis, float speed) { _rotationAxis = axis; _rotationSpeed = speed; };
+    // Note: Have to define 2 versions of setRotation bc can't set default arguments on virtual functions
 };
 
 /*************************************************************
@@ -71,9 +72,18 @@ public:
 class SkyBox : public Object {
 public:
     SkyBox(GLuint, Camera*);
+    ~SkyBox() final { glDeleteProgram(_shaderProgram); };
 
     void render() override;
+
+    // Set helpful error messages for base class modifiers that don't make sense
+    void isLit(bool) override                   { std::cerr << "Error: can't change skybox lighting\n"; };
+    void setPosition(glm::vec3) override        { std::cerr << "Error: can't change skybox position\n"; };
+    void setSize(float) override                { std::cerr << "Error: can't change skybox size\n"; };
+    void setRotation(glm::vec3) override        { std::cerr << "Error: can't change skybox rotation\n"; };
+    void setRotation(glm::vec3, float) override { std::cerr << "Error: can't change skybox rotation\n"; };
 };
+
 
 class LightSource : public Object {
     glm::vec3 _onColor;
@@ -82,6 +92,7 @@ class LightSource : public Object {
 
 public:
     LightSource(GLuint, Camera*, glm::vec3, glm::vec3);
+    ~LightSource() final { glDeleteProgram(_shaderProgram); };
 
     void render() override;
 
@@ -91,7 +102,35 @@ public:
 
     // Modifiers
     void setColor(glm::vec3);
-    void toggle();
+    void isLit(bool) override;
+    void setSize(float) override;
+
+    // Base class modifiers that don't make sense
+    void setRotation(glm::vec3) override        { std::cerr << "Error: rotation not implemented for light sources\n"; };
+    void setRotation(glm::vec3, float) override { std::cerr << "Error: rotation not implemented for light sources\n"; };
+};
+
+
+class Terrain : public Object {
+    const float SIZE = 800.0f;  // size of each square terrain object
+    const int VTX_COUNT = 128;  // number of vertices along each side
+
+    int _texture;
+    int _numIndices;
+
+    void unbind();
+
+public:
+    Terrain(GLuint, Camera*, LightSource*);
+    ~Terrain() final { glDeleteProgram(_shaderProgram); };
+
+    void render() override;
+
+    void set2DTexture(std::string);
+
+    // Base class modifiers that don't make sense
+    void setRotation(glm::vec3) override        { std::cerr << "Error: can't change terrain rotation\n"; };
+    void setRotation(glm::vec3, float) override { std::cerr << "Error: can't change terrain rotation\n"; };
 };
 
 
@@ -109,9 +148,11 @@ protected:
 
 public:
     Shape(GLuint, Camera*, LightSource*);
+    virtual ~Shape() { glDeleteProgram(_shaderProgram); };
 
     void render() override;
 };
+
 
 class Cube : public Shape {
 public:
@@ -122,6 +163,7 @@ public:
     void set2DTexture(std::string);     // Applies texture to each face
 };
 
+
 class Square : public Shape {
 public:
     Square(GLuint, Camera*, LightSource*);
@@ -129,12 +171,12 @@ public:
     void set2DTexture(std::string);
 };
 
-// TODO pyramid
-
 /*************************************************************
                           Models
  *************************************************************/
 
+// Represents a small portion of a model
+// Should never be instantiated outside of Model class
 class Mesh : public Object {
 public:     // Forward declarations
     struct Vertex;
@@ -172,8 +214,9 @@ public:
     };
 };
 
-// A container that loads data using assimp & turns it into a collection of mesh objects
-class Model {
+
+// Container that loads data using assimp & turns it into a collection of mesh objects
+class Model : public Object {
     std::vector<Mesh*> _meshes;
     std::string _pathRoot;
 
@@ -184,16 +227,17 @@ class Model {
 
 public:
     Model(std::string, Camera*, GLuint, LightSource*);
+    ~Model() final;
 
-    // Define common interface with objects
-    void render();
-    void isLit(bool b);
-    void setRotation(glm::vec3 axis, float speed = 0);
-    void setPosition(glm::vec3);
-    void setSize(float);
+    void render() override;
 
-    // Other modifiers
-    void setBlend(bool b);
+    // Modifiers
+    void setBlend(bool);
+    void isLit(bool) override;
+    void setPosition(glm::vec3) override;
+    void setSize(float) override;
+    void setRotation(glm::vec3) override;
+    void setRotation(glm::vec3, float) override;
 };
 
 #endif

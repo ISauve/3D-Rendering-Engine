@@ -96,9 +96,14 @@ void LightSource::setColor(glm::vec3 p) {
     _changed = true;
 };
 
-void LightSource::toggle() {
-    if (_color == _onColor) _color = glm::vec3(0.5, 0.5, 0.5);  // off = gray
-    else                    _color = _onColor;
+void LightSource::setSize(float s) {
+    _size = s;
+    _changed = true;
+};
+
+void LightSource::isLit(bool lit) {
+    if (lit)    _color = _onColor;
+    else        _color = glm::vec3(0.5, 0.5, 0.5);  // off = gray
 
     _changed = true;
 };

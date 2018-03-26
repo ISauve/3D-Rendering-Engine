@@ -1,8 +1,7 @@
 #include "Object.h"
 #include "../Shaders.h"
 
-Model::Model(std::string path, Camera* c, GLuint shader, LightSource* l) {
-
+Model::Model(std::string path, Camera* c, GLuint shader, LightSource* l) : Object(shader, c, l) {
     // Load the model into an assimp scene object
     Assimp::Importer importer;
     const aiScene* scene = importer.ReadFile(path,
@@ -26,6 +25,14 @@ Model::Model(std::string path, Camera* c, GLuint shader, LightSource* l) {
     processNode(scene->mRootNode, scene, c, shader, l);
     if (DEBUG) std::cout << "Succesfully loaded data for model: " << _pathRoot << std::endl;
 }
+
+Model::~Model() {
+    glDeleteProgram(_shaderProgram);
+
+    for (auto it : _meshes)
+        delete it;  // Just calls the Object destructor
+    _meshes.clear();
+};
 
 void Model::processNode(aiNode* node, const aiScene* scene, Camera* c, GLuint s, LightSource* l) {
     // Process all the meshes
@@ -119,6 +126,11 @@ void Model::render() {
         it->render();
 }
 
+void Model::setBlend(bool b) {
+    for (auto it : _meshes)
+        it->setBlend(b);
+}
+
 void Model::isLit(bool b) {
     for (auto it: _meshes)
         it->isLit(b);
@@ -134,12 +146,13 @@ void Model::setSize(float s) {
         it->setSize(s);
 };
 
+void Model::setRotation(glm::vec3 direction) {
+    for (auto it : _meshes)
+        it->setRotation(direction, 0);
+}
+
+
 void Model::setRotation(glm::vec3 direction, float speed) {
     for (auto it : _meshes)
         it->setRotation(direction, speed);
-}
-
-void Model::setBlend(bool b) {
-    for (auto it : _meshes)
-        it->setBlend(b);
 }

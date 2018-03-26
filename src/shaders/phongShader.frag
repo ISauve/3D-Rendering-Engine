@@ -12,11 +12,6 @@ uniform bool textureObject;
 uniform sampler2D sampleTexture;
 in vec2 TexCoords2D;
 
-// Cube map data (optional)
-uniform bool cubeObject;
-uniform samplerCube sampleCube;
-in vec3 TexCoords3D;
-
 // Color data (optional)
 in vec3 Color;
 
@@ -28,8 +23,8 @@ void main() {
     // Implement the Phong lighting model, if lighting details have been passed
     if (lightColor != vec3(0.0)) {
         /* Configurable parameters */
-        float ambientStr = 0.4;
-        float diffStr = 1.0;
+        float ambientStr = 0.5;
+        float diffStr = 1.1;
         float specularStrength = 1.2;
         float specularShine = 32;   // Higher -> reflection is more "dense" (not diffused)
 
@@ -59,11 +54,6 @@ void main() {
 
     vec4 result = vec4(0.0);
     if (textureObject) result = texture(sampleTexture, TexCoords2D) * lighting;
-    else if (cubeObject) {
-        // TODO there is a bug here (compiles but -> invalid op)
-        //result = texture(smpleCube, TexCoords3D);
-        //result = texture(sampleCube, TexCoords3D) * lighting;
-    }
 
     // Note: default color is black (if vColor wasn't passed in & there is no texture)
     outColor = result + vec4(Color, 1.0) * lighting;

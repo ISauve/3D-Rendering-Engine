@@ -9,17 +9,20 @@ Object::Object(GLuint s, Camera* c, LightSource* l) :_shaderProgram(s), _c(c), _
     _vao = initializeVAO();
 };
 
-Object::~Object() {
+
+Object::~Object() {     // Note: Gets called after each child class' destructor is finished
     glDeleteVertexArrays(1, &_vao);
 
     for (auto it : _bufferIDs)
         glDeleteBuffers(1, &it);
+    _bufferIDs.clear();
 
     for (auto it : _textureIDs)
         glDeleteTextures(1, &it);
+    _textureIDs.clear();
 
-    //glDeleteProgram(_shaderProgram);  several meshes uses the same program...
-};
+    // Don't delete shader program because some subclasses (ie Meshes) share them
+}
 
 // Create & bind a vertex array object
 GLuint Object::initializeVAO() {
@@ -67,21 +70,6 @@ GLuint Object::storeToVBO(GLfloat* positions, int sizeP, GLfloat* colors, int si
                     sizeP,            // offset = sizeof previous data entered
                     sizeC,            // size
                     colors);          // data
-    return vbo;
-}
-
-// Create, bind, and load data into a vertex buffer object
-GLuint Object::storeToVBO(GLfloat* positions, int sizeP, GLfloat* colors, int sizeC, GLfloat* normals, int sizeN) {
-    GLuint vbo;
-    glGenBuffers(1, &vbo);
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-
-    glBufferData(GL_ARRAY_BUFFER, sizeP + sizeC + sizeN, NULL, GL_STATIC_DRAW);
-
-    glBufferSubData(GL_ARRAY_BUFFER, 0, sizeP, positions);
-    glBufferSubData(GL_ARRAY_BUFFER, sizeP, sizeC, colors);
-    glBufferSubData(GL_ARRAY_BUFFER, sizeP + sizeC, sizeN, normals);
-
     return vbo;
 }
 

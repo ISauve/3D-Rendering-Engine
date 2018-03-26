@@ -5,17 +5,17 @@
 #include <glm/glm.hpp>
 #include <iostream>
 
-/*********** Camera settings ***********/
-const float SCREEN_H = 600.0f;
-const float SCREEN_W = 600.0f;
-const float HEIGHT = 0.8f;
-const float MOUSE_SENSITIVITY = 0.15f;
-const float MOVEMENT_SPEED = 0.02f;
-/**************************************/
-
 enum Direction {FORWARD, BACKWARD, LEFT, RIGHT};
 
 class Camera {
+    /********* Configurable settings *********/
+    const float SCREEN_H = 600.0f;
+    const float SCREEN_W = 600.0f;
+    const float HEIGHT = 0.8f;
+    const float MOUSE_SENSITIVITY = 0.15f;
+    const float MOVEMENT_SPEED = 0.02f;
+    /*****************************************/
+
     // Camera position & orientation
     glm::vec3 _position;   // Camera position
     glm::vec3 _facing;     // Direction camera is facing (default = -Z)

@@ -10,13 +10,14 @@ class Scene {
 
     SkyBox* _skybox;
     LightSource* _lightSrc;
-    std::vector<Shape*> _shapes;
-    std::vector<Model*> _models;
+    std::vector<Object*> _objects;
 
     bool _isLit;
 
     void loadShapes(Camera*);
     void loadModels(Camera*);
+    void loadTerrains(Camera*);
+
     void printErr(GLenum);
 
 public:

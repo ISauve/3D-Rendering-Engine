@@ -15,10 +15,10 @@ Square::Square(GLuint s, Camera* c, LightSource* l) : Shape(s, c, l) {
             -1.0f, 0.0f,  1.0f,  // Front left
     };
     GLfloat normals[] = {
-            0.0f, 1.0f,  0.0f,
-            0.0f, 1.0f,  0.0f,
-            0.0f, 1.0f,  0.0f,
-            0.0f, 1.0f,  0.0f,
+            0.0f, -1.0f,  0.0f,
+            0.0f, -1.0f,  0.0f,
+            0.0f, -1.0f,  0.0f,
+            0.0f, -1.0f,  0.0f,
     };
     _bufferIDs.push_back( storeToVBO(positions, sizeof(positions), normals, sizeof(normals)) );
 

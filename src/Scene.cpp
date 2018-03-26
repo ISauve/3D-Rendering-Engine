@@ -10,12 +10,14 @@ Scene::Scene(Camera* c) : _c(c), _isLit(true) {
     _skybox = new SkyBox(fetchShader("cubemap.vtx", "cubemap.frag"), c);
 
     // Create the light source (Note: needs to be done before loading any shapes/models)
-    glm::vec3 lightPos(0.5f, 1.3f, 1.5f);
+    glm::vec3 lightPos(0.0f, 10.0f, 0.0f);
     glm::vec3 lightCol(1.0f, 1.0f, 1.0f);
     _lightSrc = new LightSource(fetchShader("phongShader.vtx", "phongShader.frag"), c, lightPos, lightCol);
+    _lightSrc->setSize(0.5f);
 
     loadShapes(c);
     loadModels(c);
+    loadTerrains(c);
 
     if (DEBUG) {
         std::chrono::duration<double> loadingTime = chrono::high_resolution_clock::now() - timer;
@@ -26,9 +28,7 @@ Scene::Scene(Camera* c) : _c(c), _isLit(true) {
 Scene::~Scene() {
     delete _skybox;
     delete _lightSrc;
-    for (auto it : _shapes)
-        delete it;
-    for (auto it : _models)
+    for (auto it : _objects)
         delete it;
 }
 
@@ -49,11 +49,9 @@ void Scene::draw() {
     glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
     // Render our objects
-    _skybox->render();  // must always be 1st
+    _skybox->render();      // must always be 1st
     _lightSrc->render();
-    for (auto it : _shapes)
-        it->render();
-    for (auto it : _models)
+    for (auto it : _objects)
         it->render();
 
     // Check for problems
@@ -72,45 +70,36 @@ void Scene::draw() {
 }
 
 void Scene::toggleLight() {
-    _lightSrc->toggle();
     _isLit = !_isLit;
-
     auto state = (_isLit) ? "on" : "off";
     if (DEBUG) std::cout << "Lighting turned " << state << std::endl;
 
-    for (auto it : _shapes)
-        it->isLit(_isLit);
-    for (auto it : _models)
+    _lightSrc->isLit(_isLit);
+    for (auto it : _objects)
         it->isLit(_isLit);
 }
 
 void Scene::loadShapes(Camera* c) {
-    Square* ground = new Square(fetchShader("phongShader.vtx", "phongShader.frag"), c, _lightSrc);
-    ground->set2DTexture("assets/grass.jpg");
-    ground->setSize(5.0f);
-
     Cube* cube1 = new Cube(fetchShader("phongShader.vtx", "phongShader.frag"), c, _lightSrc);
     cube1->set2DTexture("assets/crate.jpeg");
     cube1->setPosition(glm::vec3(0.7, 0.7, 2.0));
     cube1->setRotation(glm::vec3(0.0, -1.0, 0.0), 0.05);
     cube1->setSize(0.1);
+    _objects.push_back(cube1);
 
     Cube* cube2 = new Cube(fetchShader("phongShader.vtx", "phongShader.frag"), c, _lightSrc);
     cube2->set2DTexture("assets/stones.jpg");
     cube2->setPosition(glm::vec3(-0.2, 0.65, 0.5));
     cube2->setSize(0.15);
     cube2->setRotation(glm::vec3(0.5, 1.0, 1.0));
+    _objects.push_back(cube2);
 
     Cube* cube3 = new Cube(fetchShader("phongShader.vtx", "phongShader.frag"), c, _lightSrc);
     cube3->set2DTexture("assets/metal.jpg");
     cube3->setPosition(glm::vec3(0.8, 0.9, -0.3));
     cube3->setSize(0.3);
     cube3->setRotation(glm::vec3(1.0, 0.0, 0.0), 0.03);
-
-    _shapes.push_back(ground);
-    _shapes.push_back(cube1);
-    _shapes.push_back(cube2);
-    _shapes.push_back(cube3);
+    _objects.push_back(cube3);
 }
 
 void Scene::loadModels(Camera* c) {
@@ -119,11 +108,11 @@ void Scene::loadModels(Camera* c) {
     nanosuit->setRotation(glm::vec3(0.0, -1.0, 0.0));
     nanosuit->setSize(0.06f);
     nanosuit->setBlend(false);
-    _models.push_back(nanosuit);
+    _objects.push_back(nanosuit);
 
     Model* tree = new Model("assets/Tree/Tree.obj", c, fetchShader("model.vtx", "model.frag"), _lightSrc);
     tree->setPosition(glm::vec3(2.0, 0.0, -2.5));
-    _models.push_back(tree);
+    _objects.push_back(tree);
 
     for (int i=0; i<4; i++) {
         Model* tallGrass = new Model("assets/grasses/Grass_03.obj", c, fetchShader("model.vtx", "model.frag"), _lightSrc);
@@ -151,15 +140,24 @@ void Scene::loadModels(Camera* c) {
         tallGrass->setBlend(false);
         patchOfGrass->setBlend(false);
 
-        _models.push_back(tallGrass);
-        _models.push_back(patchOfGrass);
+        _objects.push_back(tallGrass);
+        _objects.push_back(patchOfGrass);
     }
 
     Model* fern = new Model("assets/grasses/Grass_01.obj", c, fetchShader("model.vtx", "model.frag"), _lightSrc);
     fern->setPosition(glm::vec3(-2.0, 0.0, 1.0));
     fern->setBlend(false);
-    _models.push_back(fern);
+    _objects.push_back(fern);
 }
+
+
+void Scene::loadTerrains(Camera* c) {
+    Terrain* flatGrass = new Terrain(fetchShader("phongShader.vtx", "phongShader.frag"), c, _lightSrc);
+    flatGrass->setPosition(glm::vec3(-400.0, 0.0, -400.0));
+    flatGrass->set2DTexture("assets/grass2.png");
+    _objects.push_back(flatGrass);
+}
+
 
 void Scene::printErr(GLenum err) {
     switch (err) {
