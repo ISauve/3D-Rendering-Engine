@@ -116,6 +116,7 @@ class Terrain : public Object {
     const int VTX_COUNT = 128;  // number of vertices along each side
 
     int _texture;
+    int _heightMap;
     int _numIndices;
 
     void unbind();
@@ -127,6 +128,7 @@ public:
     void render() override;
 
     void set2DTexture(std::string);
+    void setHeightMap(std::string);
 
     // Base class modifiers that don't make sense
     void setRotation(glm::vec3) override        { std::cerr << "Error: can't change terrain rotation\n"; };

@@ -1,0 +1,28 @@
+#version 330 core
+
+in vec3 vPosition;
+in vec2 vTexture;
+in vec3 vNormal;
+
+uniform mat4 Model;
+uniform mat4 MVP;
+uniform sampler2D sampleHeightMap;
+
+out vec2 TexCoords2D;
+out vec3 Normal;
+out vec3 WorldCoords;
+
+void main() {
+    /* Calculate height based on height map */
+    vec4 heightMapPixel = texture(sampleHeightMap, vTexture);
+        // Image is B & W, therefore r=g=b so we can pick any of the coordinates and it should work
+    float height = heightMapPixel.x;
+        // Goes from 0-1, but we want -5 - 5
+    height = height * 10 - 5;
+
+    gl_Position = MVP * vec4(vPosition.x, height, vPosition.z, 1.0);
+
+    TexCoords2D = vTexture;
+    Normal = vec3(mat3(transpose(inverse(Model))) * vNormal); // this is necessary if you do non-uniform scaling
+    WorldCoords = vec3(Model * vec4(vPosition, 1.0));
+}

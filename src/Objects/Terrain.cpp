@@ -75,7 +75,14 @@ void Terrain::render() {
 
     // Bind texture data (no effect if a texture isn't set)
     glActiveTexture(GL_TEXTURE0);
+    GLint uniLoc = glGetUniformLocation(_shaderProgram, "sampleTexture");
+    glUniform1i(uniLoc, 0);
     glBindTexture(GL_TEXTURE_2D, _texture);
+
+    glActiveTexture(GL_TEXTURE1);
+    uniLoc = glGetUniformLocation(_shaderProgram, "sampleHeightMap");
+    glUniform1i(uniLoc, 1);
+    glBindTexture(GL_TEXTURE_2D, _heightMap);
 
     // Generate the model matrix (scale -> rotate -> translate)
     mat4 model = translate(mat4(1.0f), _position) * scale(mat4(1.0f), vec3(_size, _size, _size));
@@ -142,9 +149,6 @@ void Terrain::set2DTexture(std::string path) {
     glVertexAttribPointer(colAttrib, 2, GL_FLOAT, GL_FALSE, 0, 0);
     glEnableVertexAttribArray(colAttrib);
 
-    GLint uniTextureObj = glGetUniformLocation(_shaderProgram, "textureObject");
-    glUniform1i(uniTextureObj, 1);
-
     glActiveTexture(GL_TEXTURE0);
     GLint uniTexSample = glGetUniformLocation(_shaderProgram, "sampleTexture");
     glUniform1i(uniTexSample, 0);
@@ -152,9 +156,25 @@ void Terrain::set2DTexture(std::string path) {
     unbind();
 }
 
+void Terrain::setHeightMap(std::string path) {
+    glBindVertexArray(_vao);
+    glUseProgram(_shaderProgram);
+
+    _heightMap = storeTex(path, GL_REPEAT);
+    _textureIDs.push_back( _heightMap );
+
+    glActiveTexture(GL_TEXTURE1);
+    GLint uniTexSample = glGetUniformLocation(_shaderProgram, "sampleHeightMap");
+    glUniform1i(uniTexSample, 1);
+
+    unbind();
+}
+
 // Set the bound data back to defaults
 void Terrain::unbind() {
-    // Terrains have a maximum of 1 texture
+    glActiveTexture(GL_TEXTURE1);
+    glBindTexture(GL_TEXTURE_2D, 0);
+
     glActiveTexture(GL_TEXTURE0);
     glBindTexture(GL_TEXTURE_2D, 0);
 

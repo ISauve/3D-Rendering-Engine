@@ -111,36 +111,16 @@ void Scene::loadModels(Camera* c) {
     _objects.push_back(nanosuit);
 
     Model* tree = new Model("assets/Tree/Tree.obj", c, fetchShader("model.vtx", "model.frag"), _lightSrc);
-    tree->setPosition(glm::vec3(2.0, 0.0, -2.5));
+    tree->setPosition(glm::vec3(5.0, 0.0, -0.5));
     _objects.push_back(tree);
 
-    for (int i=0; i<4; i++) {
-        Model* tallGrass = new Model("assets/grasses/Grass_03.obj", c, fetchShader("model.vtx", "model.frag"), _lightSrc);
+    for (int i=0; i<3; i++) {
         Model* patchOfGrass = new Model("assets/grasses/Grass_02.obj", c, fetchShader("model.vtx", "model.frag"), _lightSrc);
-
-        if (i == 0) {
-            tallGrass->setPosition(glm::vec3(0.0, 0.0, -4.7));
-            patchOfGrass->setPosition(glm::vec3(-3.0f, 0.0, -3.0));
-        }
-        else if (i == 1) {
-            tallGrass->setPosition(glm::vec3(0.0, 0.0, 5.0));
-            patchOfGrass->setPosition(glm::vec3(0.0f, 0.0, -3.0));
-        }
-        else if (i == 2) {
-            tallGrass->setPosition(glm::vec3(5.0, 0.0, 0.0));
-            tallGrass->setRotation(glm::vec3(0.0, 1.0, 0.0));
-            patchOfGrass->setPosition(glm::vec3(3.3f, 0.0, -3.0));
-        } else {
-            tallGrass->setPosition(glm::vec3(-5.0, 0.0, 0.0));
-            tallGrass->setRotation(glm::vec3(0.0, -1.0, 0.0));
-            patchOfGrass->setPosition(glm::vec3(3.3f, 0.0, -3.0));
-        }
-        tallGrass->setSize(0.27f);
+        if (i == 0) patchOfGrass->setPosition(glm::vec3(-3.0f, 0.0, -3.0));
+        else if (i == 1) patchOfGrass->setPosition(glm::vec3(0.0f, 0.0, -3.0));
+        else if (i == 2) patchOfGrass->setPosition(glm::vec3(3.3f, 0.0, -3.0));
         patchOfGrass->setSize(0.60f);
-        tallGrass->setBlend(false);
         patchOfGrass->setBlend(false);
-
-        _objects.push_back(tallGrass);
         _objects.push_back(patchOfGrass);
     }
 
@@ -152,9 +132,10 @@ void Scene::loadModels(Camera* c) {
 
 
 void Scene::loadTerrains(Camera* c) {
-    Terrain* flatGrass = new Terrain(fetchShader("phongShader.vtx", "phongShader.frag"), c, _lightSrc);
+    Terrain* flatGrass = new Terrain(fetchShader("terrain.vtx", "terrain.frag"), c, _lightSrc);
     flatGrass->setPosition(glm::vec3(-400.0, 0.0, -400.0));
     flatGrass->set2DTexture("assets/grass2.png");
+    flatGrass->setHeightMap("assets/heightmap.png");
     _objects.push_back(flatGrass);
 }
 
