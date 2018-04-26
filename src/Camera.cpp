@@ -1,4 +1,5 @@
 #include "Camera.h"
+#include "Objects/Object.h"
 #include <glm/gtc/matrix_transform.hpp>
 
 using namespace glm;
@@ -7,7 +8,7 @@ Camera::Camera(double xpos, double ypos) :
         _position(vec3(0.0f, HEIGHT, 3.0f)),  _facing(vec3(0.0f, 0.0f, -1.0f)), _up(vec3(0.0f, 1.0f, 0.0f)),
         _zoom(45.0f), _ducking(false), _height(HEIGHT), _jumpTime(-1.0f),
         _yaw(-90.0f), _pitch(0.0f),
-        _xpos(xpos), _ypos(ypos), _mouseSensitivity(MOUSE_SENSITIVITY) {}
+        _xpos(xpos), _ypos(ypos), _mouseSensitivity(MOUSE_SENSITIVITY), _currTerrain(nullptr) {}
 
 mat4 Camera::ViewMatrix() {
     return lookAt(_position, _position + _facing, _up);
@@ -65,6 +66,14 @@ void Camera::Move(Direction d) {
         default: break;
     }
 
+    if (_currTerrain == nullptr) {
+        std::cout << "Error: camera terrain height is not set\n";
+        _position.y = _height;
+        return;
+    }
+
+    float terrainH = _currTerrain->getHeightAt(_position.x, _position.z);
+    _height = terrainH + HEIGHT;
     _position.y = _height;
 }
 
@@ -75,16 +84,20 @@ void Camera::Zoom(float yoffset) {
 }
 
 void Camera::isDucking(bool b) {
+    /*
     if (b) _height = HEIGHT - 0.25f;
     else _height = HEIGHT;
     _position.y = _height;
 
     _ducking = b;
+    */
 }
 
 void Camera::Jump() {
+    /*
     // Start a jump (if we're not currently in one)
     if (_jumpTime == -1) _jumpTime = 0;
+     */
 }
 
 // This fcn gets called approximately once every 0.016 seconds (1/60 FPS)

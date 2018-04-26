@@ -10,6 +10,7 @@ class Scene {
 
     SkyBox* _skybox;
     LightSource* _lightSrc;
+    Terrain* _currTerrain;
     std::vector<Object*> _objects;
 
     bool _isLit;

@@ -7,7 +7,7 @@ BIN_DIR = bin
 
 CXX = g++ -std=c++14
 CXXFLAGS = -Wall -O -g
-LIBFLAGS = -Ibuild/include lib/glad.c -lGLFW -lAssimp -framework OpenGL -framework CoreFoundation
+LIBFLAGS = -Ibuild/include lib/glad.c -lGLFW -lAssimp -lsfml-graphics -framework OpenGL -framework CoreFoundation
 
 # compile all .cpp files in source directory & it's subdirectories
 SOURCES = $(wildcard $(SRC_DIR)/*.cpp  $(SRC_DIR)/*/*.cpp)

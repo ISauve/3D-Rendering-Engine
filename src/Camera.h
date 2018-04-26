@@ -1,12 +1,14 @@
 #ifndef OPENGL_CAMERA_H
 #define OPENGL_CAMERA_H
 
+#include <glad/glad.h>
 #include <GLFW/glfw3.h>
 #include <glm/glm.hpp>
 #include <iostream>
 
 enum Direction {FORWARD, BACKWARD, LEFT, RIGHT};
 
+class Terrain;
 class Camera {
     /********* Configurable settings *********/
     const float SCREEN_H = 600.0f;
@@ -36,6 +38,9 @@ class Camera {
     double _ypos;
     GLfloat _mouseSensitivity;
 
+    // Pointer to terrain we're currently standing on
+    Terrain* _currTerrain;
+
 public:
     Camera(double, double);
 
@@ -48,6 +53,7 @@ public:
     void Look(double, double);
     void Move(Direction);
     void Zoom(float);
+    void setCurrTerrain(Terrain* t) { _currTerrain = t; };
 
     // Temporary actions
     void isDucking(bool);

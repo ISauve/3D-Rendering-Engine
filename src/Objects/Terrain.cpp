@@ -5,45 +5,79 @@
 
 using namespace glm;
 
-Terrain::Terrain(GLuint s, Camera* c, LightSource* l) : Object(s, c, l) {
+Terrain::Terrain(GLuint s, Camera* c, LightSource* l, std::string path) : Object(s, c, l) {
     glUseProgram(_shaderProgram);
 
-    // We'll dynamically generate a large square made up of triangles with VTX_COUNT vertices along each edge
-    int totalVtcs = VTX_COUNT * VTX_COUNT;
+    // Load the height map image
+    _heightMap = sf::Image();
+    if (!_heightMap.loadFromFile(path)) std::cerr << "Error: error loading heightmap " << path << std::endl;
+
+    int heightMapSize = _heightMap.getSize().x;
+
+    // Calculate the heights and normals for each pixel of this map
+    _heights.resize(heightMapSize);
+    _normals.resize(heightMapSize);
+    for (int i=0; i<heightMapSize; i++) {
+        _heights[i].resize(heightMapSize);
+        _normals[i].resize(heightMapSize);
+    }
+    for (int i=0; i<heightMapSize; i++) {
+        for (int j=0; j<heightMapSize; j++) {
+            float rawHeight = _heightMap.getPixel(i, j).r;  // Gives a # from 0-256
+            float height = (rawHeight - 128) / 128;         // Get the range to be (-1)-1
+            _heights[i][j] =  height * MAX_HEIGHT;
+        }
+    }
+    for (int i=0; i<heightMapSize; i++) {
+        for (int j=0; j<heightMapSize; j++) {
+            // Conditionals are to make sure we don't index out of bounds
+            float heightL = (i==0) ? _heights[0][j] : _heights[i-1][j];
+            float heightR = (i==heightMapSize-1) ? _heights[0][j] : _heights[i+1][j];
+            float heightU = (j==0) ? _heights[i][0] : _heights[i][j-1];
+            float heightD = (j==heightMapSize-1) ? _heights[i][0] : _heights[i][j+1];
+            vec3 normal = vec3(heightL - heightR, 1.0f, heightU - heightD);
+            _normals[i][j] = glm::normalize(normal);
+        }
+    }
+
+    // We'll dynamically generate a large square made up of triangles with _vertexCount vertices along each edge
+    _vertexCount = heightMapSize;
+    int totalVtcs = _vertexCount * _vertexCount;
 
     // Note that the square we will generate has its TOP LEFT CORNER at (0,0,0)
     GLfloat* positions = new GLfloat[totalVtcs * 3];
     GLfloat* normals = new GLfloat[totalVtcs * 3];
     int vtxCount = 0;
-    for (int i=0; i<VTX_COUNT; i++) {
-        for (int j=0; j<VTX_COUNT; j++) {
-            // Create a triangle
-            float sideLength = SIZE / ((float)VTX_COUNT - 1);
-            GLfloat x = (float) j * sideLength;
-            GLfloat z = (float) i * sideLength;
+    for (int i=0; i<_vertexCount; i++) {
+        for (int j=0; j<_vertexCount; j++) {
+            float sideLength = SIZE / ((float)_vertexCount - 1);
+
+            GLfloat x = (float) i * sideLength;
+            GLfloat z = (float) j * sideLength;
             positions[vtxCount*3] = x;
-            positions[vtxCount*3+1] = 0;   // Set Y = 0 to start (-> flat terrain)
+            positions[vtxCount*3+1] = _heights[i][j];
             positions[vtxCount*3+2] = z;
 
-            // Since this is a flat terrain, set the normal straight up (0, 1, 0)
-            normals[vtxCount*3] = 0;
-            normals[vtxCount*3+1] = 1;
-            normals[vtxCount*3+2] = 0;
+            vec3 norm = _normals[i][j];
+            normals[vtxCount*3] = norm.x;
+            normals[vtxCount*3+1] = norm.y;
+            normals[vtxCount*3+2] = norm.z;
 
             vtxCount++;
         }
     }
     _bufferIDs.push_back( storeToVBO(positions, sizeof(GLfloat) * totalVtcs * 3, normals, sizeof(GLfloat) * totalVtcs * 3) );
 
-    _numIndices = 6 * (VTX_COUNT-1) * (VTX_COUNT -1);
+    // Generate the indices for drawing these triangles
+    _numIndices = 6 * (_vertexCount-1) * (_vertexCount -1);
     GLuint* indices = new GLuint[_numIndices];
     int indexCount = 0;
-    for (int i=0; i<VTX_COUNT-1; i++) {
-        for (int j=0; j<VTX_COUNT-1; j++) {
+    for (int i=0; i<_vertexCount-1; i++) {
+        for (int j=0; j<_vertexCount-1; j++) {
             // Make a square out of 2 triangles
-            GLuint topLeft = i * VTX_COUNT + j;
-            GLuint topRight = topLeft + 1;
-            GLuint bottomLeft = (i+1) * VTX_COUNT + j;
+            GLuint topLeft = i * _vertexCount + j;  // adding vertexCount skips to "next row"
+            GLuint topRight = topLeft + 1;          // adding 1 skips to "next column"
+            GLuint bottomLeft = (i+1) * _vertexCount + j;
             GLuint bottomRight = bottomLeft + 1;
 
             indices[indexCount++] = topLeft;
@@ -75,17 +109,10 @@ void Terrain::render() {
 
     // Bind texture data (no effect if a texture isn't set)
     glActiveTexture(GL_TEXTURE0);
-    GLint uniLoc = glGetUniformLocation(_shaderProgram, "sampleTexture");
-    glUniform1i(uniLoc, 0);
     glBindTexture(GL_TEXTURE_2D, _texture);
 
-    glActiveTexture(GL_TEXTURE1);
-    uniLoc = glGetUniformLocation(_shaderProgram, "sampleHeightMap");
-    glUniform1i(uniLoc, 1);
-    glBindTexture(GL_TEXTURE_2D, _heightMap);
-
-    // Generate the model matrix (scale -> rotate -> translate)
-    mat4 model = translate(mat4(1.0f), _position) * scale(mat4(1.0f), vec3(_size, _size, _size));
+    // The only transformation that applies to terrains is translation
+    mat4 model = translate(mat4(1.0f), _position);
 
     // Pass the MVP matrix into our shader
     mat4 MVP = _c->ProjMatrix() * _c->ViewMatrix() * model;
@@ -124,17 +151,17 @@ void Terrain::set2DTexture(std::string path) {
     glUseProgram(_shaderProgram);
 
     // Dynamically determine the texture coordinates
-    int totalVertices = VTX_COUNT * VTX_COUNT;
+    int totalVertices = _vertexCount * _vertexCount;
     GLfloat* textureCoords = new GLfloat[totalVertices * 2];
     int count = 0;
-    for (int i=0; i<VTX_COUNT; i++) {
-        for (int j=0; j<VTX_COUNT; j++) {
+    for (int i=0; i<_vertexCount; i++) {
+        for (int j=0; j<_vertexCount; j++) {
             // "Shrink" the displayed texture so that it repeats instead of being 1 large texture
             // and so that it always looks about the same, regardless of how large we make the terrain
-            float shrinkFactor = SIZE;
+            float shrinkFactor = SIZE / 2.0f;
 
-            GLfloat x = (float) j /  ((float)VTX_COUNT - 1);
-            GLfloat y = (float) i / ((float)VTX_COUNT - 1);
+            GLfloat x = (float) j /  ((float)_vertexCount - 1);
+            GLfloat y = (float) i / ((float)_vertexCount - 1);
             textureCoords[count*2] = x * shrinkFactor;
             textureCoords[count*2+1] = y * shrinkFactor;
             count++;
@@ -156,19 +183,61 @@ void Terrain::set2DTexture(std::string path) {
     unbind();
 }
 
-void Terrain::setHeightMap(std::string path) {
-    glBindVertexArray(_vao);
-    glUseProgram(_shaderProgram);
-
-    _heightMap = storeTex(path, GL_REPEAT);
-    _textureIDs.push_back( _heightMap );
-
-    glActiveTexture(GL_TEXTURE1);
-    GLint uniTexSample = glGetUniformLocation(_shaderProgram, "sampleHeightMap");
-    glUniform1i(uniTexSample, 1);
-
-    unbind();
+float Terrain::barryCentric(vec3 p1, vec3 p2, vec3 p3, vec2 pos) {
+    float det = (p2.z - p3.z) * (p1.x - p3.x) + (p3.x - p2.x) * (p1.z - p3.z);
+    float l1 = ((p2.z - p3.z) * (pos.x - p3.x) + (p3.x - p2.x) * (pos.y - p3.z)) / det;
+    float l2 = ((p3.z - p1.z) * (pos.x - p3.x) + (p1.x - p3.x) * (pos.y - p3.z)) / det;
+    float l3 = 1.0f - l1 - l2;
+    return l1 * p1.y + l2 * p2.y + l3 * p3.y;
 }
+
+float Terrain::getHeightAt(float worldX, float worldZ) {
+    // Map these x and z coordinates to coords relative to terrain
+    float terrainX = worldX - _position.x;
+    float terrainZ = worldZ - _position.z;
+
+    // Terrain is just a grid of squares - find which square this terrain coord is in
+    float gridSqSz = SIZE / float(_heights.size());
+    int gridX = floor(terrainX / gridSqSz);    // takes the floor
+    int gridZ = floor(terrainZ / gridSqSz);
+
+    if (gridX < 0 || gridZ < 0 || gridX >= _heights.size()-1 || gridZ >= _heights.size()-1)
+        return 0;
+
+    // Once scaled to "real size", a terrain grid can actually be pretty big - so we'll
+    // calculate our relative position within this grid square, use that to figure out which
+    // triangle we are standing in, & then use barycentric coordinates to find the height
+    // at that exact spot
+    float xCoord = std::fmod(terrainX, float(gridSqSz)) / gridSqSz;     // range 0-1
+    float zCoord = std::fmod(terrainZ, float(gridSqSz)) / gridSqSz;     // range 0-1
+    float preciseHeight;
+
+    if (xCoord <= (1-zCoord)) {   // we're in the "top left" triangle of the grid square
+        preciseHeight = barryCentric(vec3(0, _heights[gridX][gridZ], 0),     // top left grid vertex
+                                     vec3(1, _heights[gridX+1][gridZ], 0),   // top right grid vertex
+                                     vec3(0, _heights[gridX][gridZ+1], 1),   // bottom left grid vertex
+                                     vec2(xCoord, zCoord));                  // our position
+    }
+    else {    // "bottom left" triangle
+        preciseHeight = barryCentric(vec3(1, _heights[gridX+1][gridZ], 0),     // top right grid vertex
+                                     vec3(1, _heights[gridX+1][gridZ+1], 1),   // bottom right grid vertex
+                                     vec3(0, _heights[gridX][gridZ+1], 1),     // bottom left grid vertex
+                                     vec2(xCoord, zCoord));                    // our position
+    }
+    return preciseHeight;
+}
+
+glm::vec3 Terrain::getNormalAt(int worldX, int worldZ) {
+    float terrainX = worldX - _position.x;
+    float terrainZ = worldZ - _position.z;
+    float gridSqSz = SIZE / _heightMap.getSize().x;
+    int x = terrainX / gridSqSz;
+    int z = terrainZ / gridSqSz;
+    if (x < 0 || z < 0 || x >= _heightMap.getSize().x || z >= _heightMap.getSize().y)
+        return vec3(0.0f, 0.0f, 0.0f);
+    return _normals[x][z];
+}
+
 
 // Set the bound data back to defaults
 void Terrain::unbind() {

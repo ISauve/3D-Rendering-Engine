@@ -12,8 +12,17 @@ Scene::Scene(Camera* c) : _c(c), _isLit(true) {
     // Create the light source (Note: needs to be done before loading any shapes/models)
     glm::vec3 lightPos(0.0f, 10.0f, 0.0f);
     glm::vec3 lightCol(1.0f, 1.0f, 1.0f);
-    _lightSrc = new LightSource(fetchShader("phongShader.vtx", "phongShader.frag"), c, lightPos, lightCol);
+    _lightSrc = new LightSource(fetchShader("shape.vtx", "shape.frag"), c, lightPos, lightCol);
     _lightSrc->setSize(0.5f);
+
+    // Load the 1st terrain
+    Terrain* terrain = new Terrain(fetchShader("terrain.vtx", "terrain.frag"), c, _lightSrc, "assets/heightmap.png");
+    terrain->setPosition(glm::vec3(-1 * terrain->getSize() / 2.0f, 0.0, -1 * terrain->getSize() / 2.0f));
+    terrain->set2DTexture("assets/grass2.png");
+    _objects.push_back(terrain);
+
+    _currTerrain = terrain;
+    c->setCurrTerrain(_currTerrain);
 
     loadShapes(c);
     loadModels(c);
@@ -80,21 +89,21 @@ void Scene::toggleLight() {
 }
 
 void Scene::loadShapes(Camera* c) {
-    Cube* cube1 = new Cube(fetchShader("phongShader.vtx", "phongShader.frag"), c, _lightSrc);
+    Cube* cube1 = new Cube(fetchShader("shape.vtx", "shape.frag"), c, _lightSrc);
     cube1->set2DTexture("assets/crate.jpeg");
     cube1->setPosition(glm::vec3(0.7, 0.7, 2.0));
     cube1->setRotation(glm::vec3(0.0, -1.0, 0.0), 0.05);
     cube1->setSize(0.1);
     _objects.push_back(cube1);
 
-    Cube* cube2 = new Cube(fetchShader("phongShader.vtx", "phongShader.frag"), c, _lightSrc);
+    Cube* cube2 = new Cube(fetchShader("shape.vtx", "shape.frag"), c, _lightSrc);
     cube2->set2DTexture("assets/stones.jpg");
     cube2->setPosition(glm::vec3(-0.2, 0.65, 0.5));
     cube2->setSize(0.15);
     cube2->setRotation(glm::vec3(0.5, 1.0, 1.0));
     _objects.push_back(cube2);
 
-    Cube* cube3 = new Cube(fetchShader("phongShader.vtx", "phongShader.frag"), c, _lightSrc);
+    Cube* cube3 = new Cube(fetchShader("shape.vtx", "shape.frag"), c, _lightSrc);
     cube3->set2DTexture("assets/metal.jpg");
     cube3->setPosition(glm::vec3(0.8, 0.9, -0.3));
     cube3->setSize(0.3);
@@ -132,13 +141,8 @@ void Scene::loadModels(Camera* c) {
 
 
 void Scene::loadTerrains(Camera* c) {
-    Terrain* flatGrass = new Terrain(fetchShader("terrain.vtx", "terrain.frag"), c, _lightSrc);
-    flatGrass->setPosition(glm::vec3(-400.0, 0.0, -400.0));
-    flatGrass->set2DTexture("assets/grass2.png");
-    flatGrass->setHeightMap("assets/heightmap.png");
-    _objects.push_back(flatGrass);
+    // TODO load other terrains
 }
-
 
 void Scene::printErr(GLenum err) {
     switch (err) {

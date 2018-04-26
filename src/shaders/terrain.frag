@@ -21,7 +21,7 @@ void main() {
         /* Configurable parameters */
         float ambientStr = 0.4;
         float diffStr = 1.0;
-        float specularStrength = 1.2;
+        float specularStrength = 0.1;   // terrain really shouldn't have much specular lighting
         float specularShine = 32;   // Higher -> reflection is more "dense" (not diffused)
 
         /* 1) Ambient lighting */

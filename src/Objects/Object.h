@@ -1,8 +1,8 @@
 #ifndef OPENGL_OBJECT_H
 #define OPENGL_OBJECT_H
 
-#include <glad/glad.h>
 
+#include <SFML/Graphics.hpp>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
 #include <assimp/postprocess.h>
@@ -112,25 +112,36 @@ public:
 
 
 class Terrain : public Object {
-    const float SIZE = 800.0f;  // size of each square terrain object
-    const int VTX_COUNT = 128;  // number of vertices along each side
-
+    const float SIZE = 100.0f;  // size of each square terrain object
+    const float MAX_HEIGHT = 5.0f;
     int _texture;
-    int _heightMap;
     int _numIndices;
 
+    int _vertexCount;       // number of vertices along each side
+    sf::Image _heightMap;   // height map for this
+
+    // Calculate these at initialization
+    std::vector< std::vector<float> > _heights;
+    std::vector< std::vector<glm::vec3> > _normals;
+
+    float barryCentric(glm::vec3, glm::vec3, glm::vec3, glm::vec2);
     void unbind();
 
 public:
-    Terrain(GLuint, Camera*, LightSource*);
+    Terrain(GLuint, Camera*, LightSource*, std::string);
     ~Terrain() final { glDeleteProgram(_shaderProgram); };
 
     void render() override;
 
+    // Accessor
+    float getSize() { return SIZE; };
+    float getHeightAt(float, float);
+    glm::vec3 getNormalAt(int, int);
+
     void set2DTexture(std::string);
-    void setHeightMap(std::string);
 
     // Base class modifiers that don't make sense
+    void setSize(float) override                { std::cerr << "Error: terrain size is a compile-time constant\n"; };
     void setRotation(glm::vec3) override        { std::cerr << "Error: can't change terrain rotation\n"; };
     void setRotation(glm::vec3, float) override { std::cerr << "Error: can't change terrain rotation\n"; };
 };
