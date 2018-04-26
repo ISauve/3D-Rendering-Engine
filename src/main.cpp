@@ -109,15 +109,11 @@ void keyCallback(GLFWwindow* window, int key, int scancode, int action, int mods
             case GLFW_KEY_L:
                 scene->toggleLight();
                 break;
-            case GLFW_KEY_DOWN:
-                scene->isDucking(true);
-                break;
             case GLFW_KEY_SPACE:
                 scene->Jump();
             default:break;
         }
     }
-    if (action == GLFW_RELEASE && key == GLFW_KEY_DOWN) scene->isDucking(false);
 }
 
 // Use polling for events should continue to occur for as long as the key is being pressed

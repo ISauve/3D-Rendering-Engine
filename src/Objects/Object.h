@@ -112,8 +112,8 @@ public:
 
 
 class Terrain : public Object {
-    const float SIZE = 100.0f;  // size of each square terrain object
-    const float MAX_HEIGHT = 5.0f;
+    const float SIZE = 200.0f;  // size of each square terrain object
+    const float MAX_HEIGHT = 15.0f;
     int _texture;
     int _numIndices;
 

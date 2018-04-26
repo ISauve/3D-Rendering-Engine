@@ -25,8 +25,6 @@ class Camera {
 
     // Camera state
     float _zoom;
-    bool _ducking;
-    GLfloat _height;
     GLfloat _jumpTime;
 
     // Euler angles
