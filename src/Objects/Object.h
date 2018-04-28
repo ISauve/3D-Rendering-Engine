@@ -57,7 +57,7 @@ public:
 
     // Modifiers
     virtual void isLit(bool b) { _lit = b; };
-    virtual void setPosition(glm::vec3 p) { _position = p; };
+    virtual void setPosition(glm::vec3);  // Sets position relative to the terrain
     virtual void setSize(float s) { _size = s; };
     virtual void setRotation(glm::vec3 axis) { _rotationAxis = axis; _rotationSpeed = 0; };
     virtual void setRotation(glm::vec3 axis, float speed) { _rotationAxis = axis; _rotationSpeed = speed; };
@@ -111,8 +111,8 @@ public:
 
 
 class Terrain : public Object {
-    const float SIZE = 200.0f;  // size of each square terrain object
-    const float MAX_HEIGHT = 15.0f;
+    const float SIZE = 100.0f;  // size of each square terrain object
+    const float MAX_HEIGHT = 5.0f;
     int _texture;
     int _numIndices;
 
@@ -138,6 +138,9 @@ public:
     glm::vec3 getNormalAt(int, int);
 
     void set2DTexture(std::string);
+
+    // Sets the position of the terrain in absolute terms
+    void setPosition(glm::vec3 p) override { _position = p; };
 
     // Base class modifiers that don't make sense
     void setSize(float) override                { std::cerr << "Error: terrain size is a compile-time constant\n"; };

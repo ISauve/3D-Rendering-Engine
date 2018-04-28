@@ -44,7 +44,6 @@ public:
     void Look(double x, double y) { _c->Look(x, y); };
     void Move(Direction d) { _c->Move(d); };
     void Zoom(float z) { _c->Zoom(z); };
-    void isDucking(bool b) { _c->isDucking(b); };
     void Jump() { _c->Jump(); };
 };
 

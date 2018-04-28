@@ -82,6 +82,20 @@ void Camera::Zoom(float yoffset) {
     if (_zoom > 45.0f) _zoom = 45.0f;
 }
 
+
+void Camera::setCurrTerrain(Terrain* t) {
+    _currTerrain = t;
+
+    if (_currTerrain == nullptr) {
+        std::cout << "Error setting camera terrain: terrain is null\n";
+        _position.y = HEIGHT;
+        return;
+    }
+
+    float terrainH = _currTerrain->getHeightAt(_position.x, _position.z);
+    _position.y = terrainH + HEIGHT;
+};
+
 void Camera::Jump() {
     // Start a jump (if we're not currently in one)
     if (_jumpTime == -1) _jumpTime = 0;

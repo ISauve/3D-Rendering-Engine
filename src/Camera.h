@@ -49,10 +49,9 @@ public:
     void Look(double, double);
     void Move(Direction);
     void Zoom(float);
-    void setCurrTerrain(Terrain* t) { _currTerrain = t; };
+    void setCurrTerrain(Terrain*);
 
     // Temporary actions
-    void isDucking(bool);
     void Jump();
 
     // Timer update

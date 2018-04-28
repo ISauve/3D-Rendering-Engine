@@ -1,4 +1,5 @@
 #include "Object.h"
+#include "../Scene.h"
 
 #define STB_IMAGE_IMPLEMENTATION
 #include "../../lib/stb_image.h"
@@ -23,6 +24,11 @@ Object::~Object() {     // Note: Gets called after each child class' destructor 
 
     // Don't delete shader program because some subclasses (ie Meshes) share them
 }
+
+void Object::setPosition(glm::vec3 p) {
+    float terrainH = _scene->currTerrain()->getHeightAt(p.x, p.z);
+    _position = glm::vec3(p.x, p.y + terrainH, p.z);
+};
 
 // Create & bind a vertex array object
 GLuint Object::initializeVAO() {

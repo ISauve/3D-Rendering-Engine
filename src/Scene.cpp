@@ -132,15 +132,11 @@ void Scene::loadModels() {
     tree->setPosition(glm::vec3(5.0, 0.0, -0.5));
     _objects.push_back(tree);
 
-    for (int i=0; i<3; i++) {
-        Model* patchOfGrass = new Model("assets/grasses/Grass_02.obj", fetchShader("model.vtx", "model.frag"), this);
-        if (i == 0) patchOfGrass->setPosition(glm::vec3(-3.0f, 0.0, -3.0));
-        else if (i == 1) patchOfGrass->setPosition(glm::vec3(0.0f, 0.0, -3.0));
-        else if (i == 2) patchOfGrass->setPosition(glm::vec3(3.3f, 0.0, -3.0));
-        patchOfGrass->setSize(0.60f);
-        patchOfGrass->setBlend(false);
-        _objects.push_back(patchOfGrass);
-    }
+    Model* patchOfGrass = new Model("assets/grasses/Grass_02.obj", fetchShader("model.vtx", "model.frag"), this);
+    patchOfGrass->setPosition(glm::vec3(3.3f, 0.0, -3.0));
+    patchOfGrass->setSize(0.60f);
+    patchOfGrass->setBlend(false);
+    _objects.push_back(patchOfGrass);
 
     Model* fern = new Model("assets/grasses/Grass_01.obj", fetchShader("model.vtx", "model.frag"), this);
     fern->setPosition(glm::vec3(-2.0, 0.0, 1.0));
