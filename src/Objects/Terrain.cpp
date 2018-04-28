@@ -228,6 +228,7 @@ float Terrain::getHeightAt(float worldX, float worldZ) {
     return preciseHeight;
 }
 
+// TODO: get precise normal at a point
 glm::vec3 Terrain::getNormalAt(int worldX, int worldZ) {
     float terrainX = worldX - _position.x;
     float terrainZ = worldZ - _position.z;

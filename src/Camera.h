@@ -13,7 +13,7 @@ class Camera {
     const float SCREEN_W = 600.0f;
     const float HEIGHT = 0.8f;
     const float MOUSE_SENSITIVITY = 0.15f;
-    const float MOVEMENT_SPEED = 0.02f;
+    const float MOVEMENT_SPEED = 0.03f;
     /*****************************************/
 
     // Pointer to the scene (used for loading the current terrain)
@@ -36,6 +36,9 @@ class Camera {
     double _xpos;
     double _ypos;
     GLfloat _mouseSensitivity;
+
+    // Determine movement speed based on angle btwn terrain normal & y axis
+    float CalculateSpeed(Direction);
 
 public:
     Camera(double, double, Scene*);

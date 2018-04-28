@@ -2,6 +2,7 @@
 #include "Objects/Object.h"
 #include "Scene.h"
 #include <glm/gtc/matrix_transform.hpp>
+#include <glm/gtx/rotate_vector.hpp>
 
 using namespace glm;
 
@@ -59,19 +60,71 @@ void Camera::Look(double xpos, double ypos) {
     _facing = normalize(_facing);
 }
 
+float Camera::CalculateSpeed(Direction d) {
+    float speed = MOVEMENT_SPEED;
+    try {
+        vec3 terrainNorm = _scene->currTerrain()->getNormalAt(_position.x, _position.z);
+        vec3 yAxis = vec3(0.0f, 1.0f, 0.0f);
+        float yAngle = degrees( acos( dot(terrainNorm, yAxis) / (length(terrainNorm) * length(yAxis)) ) );
+
+        // Check if we're going "down" or "up"
+        vec3 movementDirection;
+        switch(d) {
+            case FORWARD:
+                movementDirection = vec3(_facing.x, 0.0, _facing.z);
+                break;
+            case BACKWARD:
+                movementDirection = vec3(-_facing.x, 0.0, -_facing.z);
+                break;
+            case LEFT:
+                movementDirection = rotateY(_facing, radians(90.0f));
+                movementDirection = vec3(movementDirection.x, 0.0, movementDirection.z);
+                break;
+            case RIGHT:
+                movementDirection = rotateY(_facing, radians(-90.0f));
+                movementDirection = vec3(movementDirection.x, 0.0, movementDirection.z);
+                break;
+        }
+        float directionAngle = degrees( acos( dot(terrainNorm, movementDirection) / (length(terrainNorm) * length(movementDirection)) ) );
+        float multiplier = 1.0;
+
+        // Walking down a slope
+        if (directionAngle < 90 && yAngle > 40.0) multiplier = 0;   // TODO: this should result in a "slip"
+        else if (directionAngle < 90 && yAngle > 35.0) multiplier *= 1.75;
+        else if (directionAngle < 90 && yAngle > 30.0) multiplier *= 1.5;
+        else if (directionAngle < 90 && yAngle > 15.0) multiplier *= 1.2;
+
+        // Walking up a slope
+        else if (directionAngle > 90 && yAngle > 40.0) multiplier = 0;
+        else if (directionAngle > 90 && yAngle > 35.0) multiplier *= 0.2;
+        else if (directionAngle > 90 && yAngle > 30.0) multiplier *= 0.5;
+        else if (directionAngle > 90 && yAngle > 15.0) multiplier *= 0.75;
+
+        // Speed is only affected by terrain if not jumping
+        if (_jumpTime == -1) speed = MOVEMENT_SPEED * multiplier;
+
+    } catch (std::runtime_error& e) {
+        if (DEBUG) std::cerr << "Warning: terrain is null, player speed is set to default value.\n";
+    }
+
+    return speed;
+}
+
 void Camera::Move(Direction d) {
+    float speed = CalculateSpeed(d);
+
     switch(d) {
         case FORWARD:
-            _position += _facing * MOVEMENT_SPEED;
+            _position += _facing * speed;
             break;
         case BACKWARD:
-            _position -= _facing * MOVEMENT_SPEED;
+            _position -= _facing * speed;
             break;
         case LEFT:
-            _position -= normalize(cross(_facing, _up)) * MOVEMENT_SPEED;
+            _position -= normalize(cross(_facing, _up)) * speed;
             break;
         case RIGHT:
-            _position += normalize(cross(_facing, _up)) * MOVEMENT_SPEED;
+            _position += normalize(cross(_facing, _up)) * speed;
             break;
         default: break;
     }
@@ -80,7 +133,7 @@ void Camera::Move(Direction d) {
         float terrainH = _scene->currTerrain()->getHeightAt(_position.x, _position.z);
         _position.y = terrainH + HEIGHT;
     } catch (std::runtime_error& e) {
-        if (DEBUG) std::cerr << "Warning: terrain is null, camera height = default height.\n";
+        if (DEBUG) std::cerr << "Warning: terrain is null, camera height is set to default value.\n";
         _position.y = HEIGHT;
     }
 }
