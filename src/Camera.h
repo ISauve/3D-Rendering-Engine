@@ -6,7 +6,7 @@
 
 enum Direction {FORWARD, BACKWARD, LEFT, RIGHT};
 
-class Terrain;
+class Scene;
 class Camera {
     /********* Configurable settings *********/
     const float SCREEN_H = 600.0f;
@@ -15,6 +15,9 @@ class Camera {
     const float MOUSE_SENSITIVITY = 0.15f;
     const float MOVEMENT_SPEED = 0.02f;
     /*****************************************/
+
+    // Pointer to the scene (used for loading the current terrain)
+    Scene* _scene;
 
     // Camera position & orientation
     glm::vec3 _position;   // Camera position
@@ -34,11 +37,8 @@ class Camera {
     double _ypos;
     GLfloat _mouseSensitivity;
 
-    // Pointer to terrain we're currently standing on
-    Terrain* _currTerrain;
-
 public:
-    Camera(double, double);
+    Camera(double, double, Scene*);
 
     // Accessors
     glm::mat4 ViewMatrix();
@@ -49,7 +49,6 @@ public:
     void Look(double, double);
     void Move(Direction);
     void Zoom(float);
-    void setCurrTerrain(Terrain*);
 
     // Temporary actions
     void Jump();

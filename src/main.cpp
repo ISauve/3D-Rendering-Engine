@@ -31,13 +31,10 @@ int main(int argc, char** argv) {
     // Define desired frame rate
     int FPS = 60;
 
-    // Initialize the camera with the initial cursor position
+    // Initialize the scene with the initial cursor position
     double xpos, ypos;
     glfwGetCursorPos(window, &xpos, &ypos);
-    Camera c(xpos, ypos);
-
-    // Initialize the scene with this camera
-    Scene scene(&c);
+    Scene scene(xpos, ypos);
 
     // Pass the scene to GLFW so it can be accessed from the input callbacks
     glfwSetWindowUserPointer(window, &scene);
@@ -71,7 +68,7 @@ int main(int argc, char** argv) {
         // Pause for an appropriate amount of time to achieve desired frame rate
         auto msPerFrame = int (1.0 / (FPS / 1000.0));
         this_thread::sleep_until(loopStart + chrono::milliseconds(msPerFrame));
-        c.Tick();
+        scene.Tick();
     }
 
     glfwTerminate();

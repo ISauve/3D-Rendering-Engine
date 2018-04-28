@@ -1,14 +1,24 @@
 #include "Camera.h"
 #include "Objects/Object.h"
+#include "Scene.h"
 #include <glm/gtc/matrix_transform.hpp>
 
 using namespace glm;
 
-Camera::Camera(double xpos, double ypos) :
+Camera::Camera(double xpos, double ypos, Scene* s) : _scene(s),
         _position(vec3(0.0f, HEIGHT, 3.0f)),  _facing(vec3(0.0f, 0.0f, -1.0f)), _up(vec3(0.0f, 1.0f, 0.0f)),
         _zoom(45.0f), _jumpTime(-1.0f),
         _yaw(-90.0f), _pitch(0.0f),
-        _xpos(xpos), _ypos(ypos), _mouseSensitivity(MOUSE_SENSITIVITY), _currTerrain(nullptr) {}
+        _xpos(xpos), _ypos(ypos), _mouseSensitivity(MOUSE_SENSITIVITY) {
+
+    try {
+        float terrainH = _scene->currTerrain()->getHeightAt(_position.x, _position.z);
+        _position.y = terrainH + HEIGHT;
+    } catch (std::runtime_error& e) {
+        if (DEBUG) std::cerr << "Warning: camera initialized without a terrain.\n";
+        _position.y = HEIGHT;
+    }
+}
 
 mat4 Camera::ViewMatrix() {
     return lookAt(_position, _position + _facing, _up);
@@ -66,14 +76,13 @@ void Camera::Move(Direction d) {
         default: break;
     }
 
-    if (_currTerrain == nullptr) {
-        std::cout << "Error: camera terrain height is not set\n";
+    try {
+        float terrainH = _scene->currTerrain()->getHeightAt(_position.x, _position.z);
+        _position.y = terrainH + HEIGHT;
+    } catch (std::runtime_error& e) {
+        if (DEBUG) std::cerr << "Warning: terrain is null, camera height = default height.\n";
         _position.y = HEIGHT;
-        return;
     }
-
-    float terrainH = _currTerrain->getHeightAt(_position.x, _position.z);
-    _position.y = terrainH + HEIGHT;
 }
 
 void Camera::Zoom(float yoffset) {
@@ -81,20 +90,6 @@ void Camera::Zoom(float yoffset) {
     if (_zoom < 1.0f) _zoom = 1.0f;
     if (_zoom > 45.0f) _zoom = 45.0f;
 }
-
-
-void Camera::setCurrTerrain(Terrain* t) {
-    _currTerrain = t;
-
-    if (_currTerrain == nullptr) {
-        std::cout << "Error setting camera terrain: terrain is null\n";
-        _position.y = HEIGHT;
-        return;
-    }
-
-    float terrainH = _currTerrain->getHeightAt(_position.x, _position.z);
-    _position.y = terrainH + HEIGHT;
-};
 
 void Camera::Jump() {
     // Start a jump (if we're not currently in one)
@@ -105,7 +100,13 @@ void Camera::Jump() {
 void Camera::Tick() {
     if (_jumpTime == -1) return;  // don't do anything if we're not jumping
 
-    float terrainH = _currTerrain->getHeightAt(_position.x, _position.z);
+    float terrainH = 0;
+    try {
+        terrainH = _scene->currTerrain()->getHeightAt(_position.x, _position.z);
+    } catch (std::runtime_error& e) {
+        if (DEBUG) std::cerr << "Warning: terrain is null, jump height ignores terrain height.\n";
+    }
+
     float jumpH = 3.0f * _jumpTime + 0.5f * -9.8f * _jumpTime * _jumpTime;
     _position.y = terrainH + jumpH + HEIGHT;
     _jumpTime += 0.016;

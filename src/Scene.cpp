@@ -3,7 +3,7 @@
 
 using namespace std;
 
-Scene::Scene(Camera* c) : _c(c), _isLit(true) {
+Scene::Scene(double xpos, double ypos) : _isLit(true) {
     auto timer = chrono::high_resolution_clock::now();
 
     // Create the skybox
@@ -22,7 +22,9 @@ Scene::Scene(Camera* c) : _c(c), _isLit(true) {
     _objects.push_back(terrain);
 
     _currTerrain = terrain;
-    c->setCurrTerrain(_currTerrain);
+
+    // Initialize the camera with the initial cursor position
+    _c = new Camera(xpos, ypos, this);
 
     loadShapes();
     loadModels();

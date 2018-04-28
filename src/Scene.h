@@ -29,7 +29,7 @@ class Scene {
     void handleErr(GLenum); // Can throw a EndProgramException
 
 public:
-    Scene(Camera* c);
+    Scene(double, double);
     ~Scene();
 
     void draw(); // Can throw a EndProgramException
@@ -45,6 +45,7 @@ public:
     void Move(Direction d) { _c->Move(d); };
     void Zoom(float z) { _c->Zoom(z); };
     void Jump() { _c->Jump(); };
+    void Tick() { _c->Tick(); };
 };
 
 

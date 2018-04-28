@@ -55,9 +55,12 @@ public:
 
     virtual void render() {};   // Can throw a std::runtime_error
 
-    // Modifiers
+    /**** Modifiers ****/
     virtual void isLit(bool b) { _lit = b; };
-    virtual void setPosition(glm::vec3);  // Sets position relative to the terrain
+
+    // Sets position relative to the terrain
+    virtual void setPosition(glm::vec3);    // Can throw a std::runtime_error exception if terrain isn't set
+
     virtual void setSize(float s) { _size = s; };
     virtual void setRotation(glm::vec3 axis) { _rotationAxis = axis; _rotationSpeed = 0; };
     virtual void setRotation(glm::vec3 axis, float speed) { _rotationAxis = axis; _rotationSpeed = speed; };
