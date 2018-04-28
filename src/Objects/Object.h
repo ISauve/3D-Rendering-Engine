@@ -1,7 +1,6 @@
 #ifndef OPENGL_OBJECT_H
 #define OPENGL_OBJECT_H
 
-
 #include <SFML/Graphics.hpp>
 #include <assimp/Importer.hpp>
 #include <assimp/scene.h>
@@ -11,10 +10,9 @@
 #include <chrono>
 #include <vector>
 #include <unordered_map>
+#include <iostream>
 
-#include "../Camera.h"
-class Camera;
-class LightSource;
+#include "../Glad.h"
 
 static bool DEBUG = false;
 
@@ -22,13 +20,14 @@ static bool DEBUG = false;
                    Abstract Base Classes
  *************************************************************/
 
+class Scene;
 class Object {
 protected:
     GLuint _shaderProgram;
     GLuint _vao;
 
-    Camera* _c;
-    LightSource* _lightSrc;
+    // Pointer to the scene in order to access the camera, light source, terrain, etc
+    Scene* _scene;
 
     // Buffer ID storage for clean-up purposes: individually references may also be kept
     std::vector <GLuint> _bufferIDs;
@@ -51,10 +50,10 @@ protected:
     GLuint storeCubeMap(std::vector<std::string>&);
 
 public:
-    Object(GLuint, Camera*, LightSource*);
+    Object(GLuint, Scene*);
     virtual ~Object();
 
-    virtual void render() {};
+    virtual void render() {};   // Can throw a std::runtime_error
 
     // Modifiers
     virtual void isLit(bool b) { _lit = b; };
@@ -71,7 +70,7 @@ public:
 
 class SkyBox : public Object {
 public:
-    SkyBox(GLuint, Camera*);
+    SkyBox(GLuint, Scene*);
     ~SkyBox() final { glDeleteProgram(_shaderProgram); };
 
     void render() override;
@@ -91,7 +90,7 @@ class LightSource : public Object {
     bool _changed;
 
 public:
-    LightSource(GLuint, Camera*, glm::vec3, glm::vec3);
+    LightSource(GLuint, Scene*, glm::vec3, glm::vec3);
     ~LightSource() final { glDeleteProgram(_shaderProgram); };
 
     void render() override;
@@ -128,7 +127,7 @@ class Terrain : public Object {
     void unbind();
 
 public:
-    Terrain(GLuint, Camera*, LightSource*, std::string);
+    Terrain(GLuint, Scene*, std::string);
     ~Terrain() final { glDeleteProgram(_shaderProgram); };
 
     void render() override;
@@ -160,7 +159,7 @@ protected:
     void unbind();
 
 public:
-    Shape(GLuint, Camera*, LightSource*);
+    Shape(GLuint, Scene*);
     virtual ~Shape() { glDeleteProgram(_shaderProgram); };
 
     void render() override;
@@ -169,7 +168,7 @@ public:
 
 class Cube : public Shape {
 public:
-    Cube(GLuint, Camera*, LightSource*);
+    Cube(GLuint, Scene*);
 
     void setColor(glm::vec3);           // Applies a uniform color
     void setColors(GLfloat*, int);      // Applies a custom color data for each vertex
@@ -179,7 +178,7 @@ public:
 
 class Square : public Shape {
 public:
-    Square(GLuint, Camera*, LightSource*);
+    Square(GLuint, Scene*);
 
     void set2DTexture(std::string);
 };
@@ -207,7 +206,7 @@ private:
     void unbind();
 
 public:
-    Mesh(GLuint, Camera*, LightSource*);
+    Mesh(GLuint, Scene*);
 
     void render() override;
 
@@ -234,12 +233,12 @@ class Model : public Object {
     std::string _pathRoot;
 
     // Processing helpers
-    void processNode(aiNode*, const aiScene*, Camera*, GLuint, LightSource*);
-    Mesh* processMesh(aiMesh*, const aiScene*, Camera*, GLuint, LightSource*);
+    void processNode(aiNode*, const aiScene*, GLuint, Scene*);
+    Mesh* processMesh(aiMesh*, const aiScene*, GLuint, Scene*);
     std::vector<Mesh::Texture> getTextures(aiMaterial*, aiTextureType, std::string, std::string);
 
 public:
-    Model(std::string, Camera*, GLuint, LightSource*);
+    Model(std::string, GLuint, Scene*);
     ~Model() final;
 
     void render() override;

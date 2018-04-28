@@ -2,31 +2,43 @@
 #define OPENGL_SCENE_H
 
 #include "Objects/Object.h"
+#include "Camera.h"
 
 #include <vector>
 
+struct EndProgramException : public std::exception {
+    std::string info;
+    EndProgramException(std::string i) : info(i) {}
+    const char * what () const throw () { return info.c_str(); }
+};
+
 class Scene {
     Camera* _c;
-
     SkyBox* _skybox;
     LightSource* _lightSrc;
     Terrain* _currTerrain;
+
     std::vector<Object*> _objects;
 
     bool _isLit;
 
-    void loadShapes(Camera*);
-    void loadModels(Camera*);
-    void loadTerrains(Camera*);
+    void loadShapes();
+    void loadModels();
+    void loadTerrains();
 
-    void printErr(GLenum);
+    void handleErr(GLenum); // Can throw a EndProgramException
 
 public:
     Scene(Camera* c);
     ~Scene();
 
-    void draw();
+    void draw(); // Can throw a EndProgramException
     void toggleLight();
+
+    // Accessors - can all throw std::runtime_error exception
+    Camera* camera();
+    LightSource* lightSource();
+    Terrain* currTerrain();
 
     // Camera modifiers
     void Look(double x, double y) { _c->Look(x, y); };

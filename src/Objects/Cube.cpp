@@ -6,7 +6,7 @@
 
 using namespace glm;
 
-Cube::Cube(GLuint s, Camera* c, LightSource* l) : Shape(s, c, l) {
+Cube::Cube(GLuint s, Scene* sc) : Shape(s, sc) {
     glUseProgram(_shaderProgram);
 
     _numElements = 36;

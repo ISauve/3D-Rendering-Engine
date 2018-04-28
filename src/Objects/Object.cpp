@@ -3,7 +3,7 @@
 #define STB_IMAGE_IMPLEMENTATION
 #include "../../lib/stb_image.h"
 
-Object::Object(GLuint s, Camera* c, LightSource* l) :_shaderProgram(s), _c(c), _lightSrc(l),
+Object::Object(GLuint s, Scene* sc) :_shaderProgram(s), _scene(sc),
     _lit(true), _position(glm::vec3(0.0)), _size(1.0f), _rotationAxis(glm::vec3(0.0)), _rotationSpeed(0.0f) {
     _start = std::chrono::high_resolution_clock::now();
     _vao = initializeVAO();

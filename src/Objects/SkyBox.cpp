@@ -1,12 +1,12 @@
 #include "Object.h"
+#include "../Scene.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 using namespace glm;
 
-
-SkyBox::SkyBox(GLuint s, Camera* c) : Object(s, c, nullptr) {
+SkyBox::SkyBox(GLuint s, Scene* sc) : Object(s, sc) {
 
     // Vertex data simply represents a large cube
     GLfloat points[] = {
@@ -73,11 +73,11 @@ void SkyBox::render() {
     glDepthMask(GL_FALSE);
 
     // Remove the translation component of the view matrix
-    mat4 view = mat4(mat3(_c->ViewMatrix()));
+    mat4 view = mat4(mat3(_scene->camera()->ViewMatrix()));
 
     // Pass the MVP matrix into our shader
     mat4 model = mat4(1.0f);
-    mat4 MVP = _c->ProjMatrix() * view * model;
+    mat4 MVP = _scene->camera()->ProjMatrix() * view * model;
     GLint uniTransform = glGetUniformLocation(_shaderProgram, "MVP");
     glUniformMatrix4fv(uniTransform, 1, GL_FALSE, value_ptr(MVP));
 

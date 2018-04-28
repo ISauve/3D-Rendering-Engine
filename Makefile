@@ -25,9 +25,10 @@ TARGET = $(BIN_DIR)/opengl
 default: $(TARGET)
 
 ### Link
+# Note that the LIBFLAGS must come last
 $(TARGET): $(OBJECTS)
 	@[ -d $(BIN_DIR) ] || mkdir -p $(BIN_DIR)
-	$(CXX) $(CXXFLAGS) $(OBJECTS) -o $(TARGET) $(LIBFLAGS)  # Note that the LIBFLAGS must come last
+	$(CXX) $(CXXFLAGS) $(OBJECTS) -o $(TARGET) $(LIBFLAGS)
 
 ### Compile
 $(BUILD_DIR)/%.o: $(SRC_DIR)/%.cpp

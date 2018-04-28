@@ -55,7 +55,13 @@ int main(int argc, char** argv) {
         auto loopStart = chrono::high_resolution_clock::now();
 
         // Draw the scene
-        scene.draw();
+        try {
+            scene.draw();
+        } catch (EndProgramException e) {
+            std::cerr << e.what() << std::endl;
+            std::cout << "Ending program due to erroneous state..." << std::endl;
+            glfwSetWindowShouldClose(window, GLFW_TRUE);
+        }
         glfwSwapBuffers(window);
 
         // Poll for events
@@ -69,6 +75,7 @@ int main(int argc, char** argv) {
     }
 
     glfwTerminate();
+    std::cout << "Goodbye!" << std::endl;
     return  0;
 }
 

@@ -1,10 +1,11 @@
 #include "Object.h"
 #include "../Shaders.h"
+#include "../Scene.h"
 
-Model::Model(std::string path, Camera* c, GLuint shader, LightSource* l) : Object(shader, c, l) {
+Model::Model(std::string path, GLuint shader, Scene* sc) : Object(shader, sc) {
     // Load the model into an assimp scene object
     Assimp::Importer importer;
-    const aiScene* scene = importer.ReadFile(path,
+    const aiScene* aiscene = importer.ReadFile(path,
                                              aiProcess_Triangulate // We want all primitives to be triangles
                                              | aiProcess_FlipUVs); // Flip the texture y-coordinate where necessary
     /*
@@ -14,7 +15,7 @@ Model::Model(std::string path, Camera* c, GLuint shader, LightSource* l) : Objec
      *  aiProcess_OptimizeMeshes - joins smaller meshes into a larger meshes
      */
 
-    if (!scene || scene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !scene->mRootNode) {
+    if (!aiscene || aiscene->mFlags & AI_SCENE_FLAGS_INCOMPLETE || !aiscene->mRootNode) {
         std::cout << "Error loading model at " << path << ": " << importer.GetErrorString() << std::endl;
         return;
     }
@@ -22,7 +23,7 @@ Model::Model(std::string path, Camera* c, GLuint shader, LightSource* l) : Objec
     _pathRoot = path.substr(0, path.find_last_of('/'));
 
     // Recursively processes the nodes & saves the generated meshes in the _meshes vector
-    processNode(scene->mRootNode, scene, c, shader, l);
+    processNode(aiscene->mRootNode, aiscene, shader, sc);
     if (DEBUG) std::cout << "Succesfully loaded data for model: " << _pathRoot << std::endl;
 }
 
@@ -34,16 +35,16 @@ Model::~Model() {
     _meshes.clear();
 };
 
-void Model::processNode(aiNode* node, const aiScene* scene, Camera* c, GLuint s, LightSource* l) {
+void Model::processNode(aiNode* node, const aiScene* aiscene, GLuint s, Scene* sc) {
     // Process all the meshes
     for (int i=0; i < node->mNumMeshes; i++) {
-        aiMesh* mesh = scene->mMeshes[node->mMeshes[i]];
-        _meshes.push_back(processMesh(mesh, scene, c, s, l));
+        aiMesh* mesh = aiscene->mMeshes[node->mMeshes[i]];
+        _meshes.push_back(processMesh(mesh, aiscene, s, sc));
     }
 
     // Recurse on the node's children
     for (int i=0; i < node->mNumChildren; i++)
-        processNode(node->mChildren[i], scene, c, s, l);
+        processNode(node->mChildren[i], aiscene, s, sc);
 }
 
 // List of texture types: http://assimp.sourceforge.net/lib_html/material_8h.html#a7dd415ff703a2cc53d1c22ddbbd7dde0
@@ -64,8 +65,8 @@ std::vector<Mesh::Texture> Model::getTextures(aiMaterial* mat, aiTextureType typ
     return textures;
 }
 
-Mesh* Model::processMesh(aiMesh* mesh, const aiScene* scene, Camera* c, GLuint s, LightSource* l) {
-    Mesh* newMesh = new Mesh(s, c, l);
+Mesh* Model::processMesh(aiMesh* mesh, const aiScene* aiscene, GLuint s, Scene* sc) {
+    Mesh* newMesh = new Mesh(s, sc);
 
     std::vector<Mesh::Vertex> vertices;
     std::vector<unsigned int> indices;
@@ -106,7 +107,7 @@ Mesh* Model::processMesh(aiMesh* mesh, const aiScene* scene, Camera* c, GLuint s
     }
 
     // Retrieve material (texture) data
-    aiMaterial* mat = scene->mMaterials[mesh->mMaterialIndex];
+    aiMaterial* mat = aiscene->mMaterials[mesh->mMaterialIndex];
     auto ambient = getTextures(mat, aiTextureType_AMBIENT, "ambient_texture_", _pathRoot);
     auto diffuse = getTextures(mat, aiTextureType_DIFFUSE, "diffuse_texture_", _pathRoot);
     auto specular = getTextures(mat, aiTextureType_SPECULAR, "specular_texture_", _pathRoot);

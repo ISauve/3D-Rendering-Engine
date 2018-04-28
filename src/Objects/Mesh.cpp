@@ -1,11 +1,12 @@
 #include "Object.h"
+#include "../Scene.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 using namespace glm;
 
-Mesh::Mesh(GLuint s, Camera* c, LightSource* l) : Object(s, c, l), _blend (true) {
+Mesh::Mesh(GLuint s, Scene* sc) : Object(s, sc), _blend (true) {
     unbind();
 };
 
@@ -76,23 +77,23 @@ void Mesh::render() {
 
     // Pass the MVP matrix into our shader
     mat4 model = translate(mat4(1.0f), _position) * rot * scale(mat4(1.0f), vec3(_size, _size, _size));
-    mat4 MVP = _c->ProjMatrix() * _c->ViewMatrix() * model;
+    mat4 MVP = _scene->camera()->ProjMatrix() * _scene->camera()->ViewMatrix() * model;
     GLint uniTransform = glGetUniformLocation(_shaderProgram, "MVP");
     glUniformMatrix4fv(uniTransform, 1, GL_FALSE, value_ptr(MVP));
 
     if (_lit) {
         // Needed: light color, light position, model matrix, current position
         GLint uniLightCol = glGetUniformLocation(_shaderProgram, "lightColor");
-        glUniform3fv(uniLightCol, 1, value_ptr(_lightSrc->Color()));
+        glUniform3fv(uniLightCol, 1, value_ptr(_scene->lightSource()->Color()));
 
         GLint uniLightPos = glGetUniformLocation(_shaderProgram, "lightPos");
-        glUniform3fv(uniLightPos, 1, value_ptr(_lightSrc->Position()));
+        glUniform3fv(uniLightPos, 1, value_ptr(_scene->lightSource()->Position()));
 
         GLint uniModel = glGetUniformLocation(_shaderProgram, "Model");
         glUniformMatrix4fv(uniModel, 1, GL_FALSE, value_ptr(model));
 
         GLint uniPosn = glGetUniformLocation(_shaderProgram, "viewPos");
-        glUniform3fv(uniPosn, 1, value_ptr(_c->Position()));
+        glUniform3fv(uniPosn, 1, value_ptr(_scene->camera()->Position()));
 
     } else {
         // Set lightColor = 0 so the fragment shader knows not to try to light the shape

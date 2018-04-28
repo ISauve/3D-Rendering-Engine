@@ -1,9 +1,7 @@
 #ifndef OPENGL_CAMERA_H
 #define OPENGL_CAMERA_H
 
-#include <glad/glad.h>
-#include <GLFW/glfw3.h>
-#include <glm/glm.hpp>
+#include "Glad.h"
 #include <iostream>
 
 enum Direction {FORWARD, BACKWARD, LEFT, RIGHT};

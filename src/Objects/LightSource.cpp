@@ -1,11 +1,12 @@
 #include "Object.h"
+#include "../Scene.h"
 
 #include <glm/gtc/matrix_transform.hpp>
 #include <glm/gtc/type_ptr.hpp>
 
 using namespace glm;
 
-LightSource::LightSource(GLuint s, Camera* c, glm::vec3 lightPos, glm::vec3 lightCol) : Object(s, c, nullptr) {
+LightSource::LightSource(GLuint s, Scene* sc, glm::vec3 lightPos, glm::vec3 lightCol) : Object(s, sc) {
 
     _position = lightPos;
     _color = lightCol;
@@ -83,7 +84,7 @@ void LightSource::render() {
         _changed = false;
     }
 
-    mat4 MVP = _c->ProjMatrix() * _c->ViewMatrix() * mat4(1.0f);
+    mat4 MVP = _scene->camera()->ProjMatrix() * _scene->camera()->ViewMatrix() * mat4(1.0f);
     GLint uniTranSizeform = glGetUniformLocation(_shaderProgram, "MVP");
     glUniformMatrix4fv(uniTranSizeform, 1, GL_FALSE, value_ptr(MVP));
 

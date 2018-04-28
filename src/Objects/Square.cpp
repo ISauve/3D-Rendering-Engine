@@ -2,7 +2,7 @@
 
 using namespace glm;
 
-Square::Square(GLuint s, Camera* c, LightSource* l) : Shape(s, c, l) {
+Square::Square(GLuint s, Scene* sc) : Shape(s, sc) {
     glUseProgram(_shaderProgram);
 
     _numElements = 6;
