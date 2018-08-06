@@ -1,4 +1,4 @@
-# OpenGL Practice
+# 3D Rendering Engine
 
 ![Preview](preview.gif?raw=true)
 
